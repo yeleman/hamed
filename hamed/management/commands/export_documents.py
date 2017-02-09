@@ -7,8 +7,7 @@ import logging
 from django.core.management.base import BaseCommand, CommandError
 
 from hamed.models.targets import Target
-from hamed.exports.pdf.social_survey import gen_social_survey_pdf
-from hamed.utils import gen_ident_qrcode
+from hamed.utils import gen_targets_documents
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +30,4 @@ class Command(BaseCommand):
         logger.info(target)
 
         # generate paper form
-        qrcode = gen_ident_qrcode(target)
-        paper = gen_social_survey_pdf(target.dataset, qrcode)
-        from pprint import pprint as pp ; pp(target.dataset)
-        with open('/tmp/{id}.pdf'.format(id=ident), 'wb') as f:
-            f.write(paper.read())
+        gen_targets_documents(target)
