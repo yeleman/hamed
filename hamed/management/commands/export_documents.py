@@ -30,4 +30,4 @@ class Command(BaseCommand):
         logger.info(target)
 
         # generate paper form
-        gen_targets_documents(target)
+        gen_targets_documents([target])
