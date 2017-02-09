@@ -6,7 +6,7 @@ import logging
 
 from django.core.management.base import BaseCommand, CommandError
 
-from hamed.models import Target
+from hamed.models.targets import Target
 from hamed.exports.pdf.social_survey import gen_social_survey_pdf
 from hamed.utils import gen_ident_qrcode
 
