@@ -1,0 +1,30 @@
+{% if collects.count %}
+<table class="table">
+{% if switch != "active" %}
+<tr>
+	<th>Collecte</th>
+	<th>Statut</th>
+	<th>Nb. cibles</th>
+	<th>Nb. indigents</th>
+	<th>Nb. refus</th>
+	<th>Nb. photos</th>
+	<th>Poids photos</th>
+</tr>
+{% endif %}
+{% endif %}
+{% for collect in collects %}
+<tr>
+	<td><a href="{% url 'collect' collect.id %}">{{ collect.name }}</a></td>
+	<td>{{ collect.verbose_status }}</td>
+	{% if switch != "active" %}
+	<td>{{ collect.nb_submissions }}</td>
+	<td>{{ collect.nb_indigents }}</td>
+	<td>{{ collect.nb_non_indigents }}</td>
+	<td>{{ collect.nb_medias }}</td>
+	<td>{{ collect.medias_size|filesizeformat }}</td>
+	{% endif %}
+</tr>
+{% empty %}
+<p>Aucune collecte pour le moment…</p>
+{% endfor %}
+{% if collects.count %}</table>{% endif %}

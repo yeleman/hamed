@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<h2>Collectes en cours</h2>
+{% include "collects_table.html" with collects=collects.actives switch="active" %}
+<p><a href="{% url 'start_collect' %}"><img style="width: 1.5em;" src="{% static "icons/new.svg" %}"> Nouvelle collecte</a></p>
+
+<h2>Collectes archivées</h2>
+{% include "collects_table.html" with collects=collects.archives  switch="archives" %}
+
+{% endblock %}

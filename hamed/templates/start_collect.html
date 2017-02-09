@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section id='form'>
+<h2>Nouvelle collecte</h2>
+{% if state is not 'created' %}
+<form action="" method="POST">
+{% csrf_token %}
+{{ form }}
+<input type="submit">
+</form>
+{% else %}
+<p>La collecte {{ collect }} a été créée !</p>
+<p><a href="{% url 'collect' collect.id %}"><button class="btn btn-default">Accèder à la collecte</button></a></p>
+{% endif %}
+</section>
+
+<section id="help">
+	<h2>Aide</h2>
+	<p>dsad daskdjasdjsk </p>
+</section>
+{% endblock %}

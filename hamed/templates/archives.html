@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if collects.count %}
+<table class="table">
+<tr>
+	<th>Collecte</th>
+	<th>Statut</th>
+	<th>Nb. cibles</th>
+	<th>Nb. indigents</th>
+	<th>Nb. refus</th>
+	<th>Nb. photos</th>
+	<th>Poids photos</th>
+</tr>
+{% endif %}
+{% for collect in collects %}
+<tr>
+	<td>{{ collect.name }}</td>
+	<td>{{ collect.verbose_status }}</td>
+	<td>{{ collect.nb_submissions }}</td>
+	<td>{{ collect.nb_indigents }}</td>
+	<td>{{ collect.nb_non_indigents }}</td>
+	<td>{{ collect.nb_medias }}</td>
+	<td>{{ collect.medias_size|filesizeformat }}</td>
+</tr>
+{% empty %}
+<p>Aucune collecte pour le moment…</p>
+{% endfor %}
+{% if collects.count %}</table>{% endif %}
+{% endblock %}

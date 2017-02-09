@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ collect.name }}</h1>
+<p><strong>{{ collect.verbose_status }}</strong></p>
+<hr />
+<p><em>Démarré le:</em> {{ collect.started_on }}</p>
+{% if collect.has_ended %}
+<p><em>Terminée le:</em> {{ collect.ended_on }}</p>
+{% endif %}
+{% if collect.has_finalized %}
+<p><em>Finalisée le:</em> {{ collect.finalized_on }}</p>
+{% endif %}
+<p><em>Commune:</em> {{ collect.commune }}</p>
+<p><em>Suffixe:</em> {{ collect.suffix }}</p>
+{% if collect.has_ended %}
+<p><em>Nb de soumissions:</em> {{ collect.nb_submissions|default_if_none:"n/a" }}</p>
+<p><em>Nb d'indigents:</em> {{ collect.nb_indigents|default_if_none:"n/a" }}</p>
+<p><em>Nb de médias:</em> {{ collect.nb_medias|default_if_none:"n/a" }}</p>
+<p><em>Poids des médias:</em> {{ collect.medias_size|default_if_none:"n/a" }}</p>
+{% else %}
+<p><em>Nb de soumissions:</em> {{ ona_collect.num_of_submissions|default_if_none:"n/a" }}</p>
+{% endif %}
+<hr />
+<p><a href="{{ collect.get_next_step.url }}"><button class="btn btn-primary">{{ collect.get_next_step.label }}</button></a></p>
+{% endblock %}

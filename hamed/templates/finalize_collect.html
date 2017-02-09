@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section id='form'>
+<h2>Mettre fin à la collecte</h2>
+<h3>{{ state }}</h3>
+{% if state is not 'success' %}
+<form action="" method="POST">
+{% csrf_token %}
+<input class="btn btn-primary" type="submit" value="Cloturer la collecte maintenant">
+</form>
+{% else %}
+<p>La collecte {{ collect }} a été cloturée !</p>
+<p><a href="{% url 'collect' collect.id %}"><button class="btn btn-default">Accèder à la collecte</button></a></p>
+{% endif %}
+</section>
+
+<section id="help">
+	<h2>Aide</h2>
+	<p>dsad daskdjasdjsk </p>
+</section>
+{% endblock %}

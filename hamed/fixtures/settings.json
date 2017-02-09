@@ -1,0 +1,24 @@
+[{
+  "fields": {
+  	"key": "ona-server",
+    "value": "http://192.168.5.112:8000"
+  },
+  "model": "hamed.Settings",
+  "pk": 0
+},
+{
+  "fields": {
+  	"key": "ona-username",
+    "value": "reg"
+  },
+  "model": "hamed.Settings",
+  "pk": 1
+},
+{
+  "fields": {
+  	"key": "ona-token",
+    "value": "a627cc7a7403c9934d41775736bd1875e8dab2de"
+  },
+  "model": "hamed.Settings",
+  "pk": 2
+}]
