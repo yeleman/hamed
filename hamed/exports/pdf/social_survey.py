@@ -51,9 +51,9 @@ def gen_social_survey_pdf(instance, qrcode):
         return region, cercle, commune, village, lieu
 
     def get_other(data, key):
-        profession = data.get(key)
-        profession_other = data.get('{}_other'.format(key))
-        return profession_other if profession == 'other' else profession
+        data_value = data.get(key)
+        data_value_other = data.get('{}_other'.format(key))
+        return data_value_other if data_value == 'other' else data_value
 
     def get_int(data, key, default=0):
         try:
@@ -87,7 +87,7 @@ def gen_social_survey_pdf(instance, qrcode):
         nom = Instance.clean_lastname(
             data.get('{p}nom{s}'.format(p=p, s=s)))
         prenoms = Instance.clean_firstnames(data.get('{p}prenoms{s}'
-                                                          .format(p=p, s=s)))
+                                                     .format(p=p, s=s)))
         name = Instance.clean_name(nom, prenoms)
         return nom, prenoms, name
 
@@ -101,13 +101,16 @@ def gen_social_survey_pdf(instance, qrcode):
         return """<para align=left spaceb=5><font size=9><u>{label}</u></font>
                    : {text}</para>""".format(label=label, text=text)
 
+    def get_blank_for_list_empty(data_list):
+        return BLANK if len(data_list) == 0 else data_list
+
     # lieu (pas sur papier)
     lieu_region, lieu_cercle, lieu_commune, lieu_village, lieu = get_lieu(
         instance, 'lieu_')
     numero_enquete = instance.get('numero') or ""
-    objet_enquete = instance.get('objet') or instance.get('objet_other')
+    objet_enquete = get_other(instance, 'objet')
     identifiant_enqueteur = instance.get('enqueteur') or BLANK
-    demandeur = instance.get('demandeur') or BLANK
+    demandeur = get_other(instance, 'demandeur')
 
     # enquêté
     nom, prenoms, name = get_nom(instance, p='enquete/')
@@ -115,8 +118,8 @@ def gen_social_survey_pdf(instance, qrcode):
     is_female = sexe == 'feminin'
     type_naissance, annee_naissance, ddn, naissance = get_dob(
         instance, 'enquete/', is_female)
-    region_naissance, cercle_naissance, commune_naissance, lieu_naissance = get_lieu_naissance(
-        instance, 'enquete/')
+    region_naissance, cercle_naissance, commune_naissance, \
+        lieu_naissance = get_lieu_naissance(instance, 'enquete/')
 
     # enquêté / instance
     nom_pere, prenoms_pere, name_pere = get_nom(
@@ -127,18 +130,21 @@ def gen_social_survey_pdf(instance, qrcode):
     situation_matrioniale = instance.get(
         'enquete/situation-matrimoniale', BLANK)
     profession = get_other(instance, 'enquete/profession')
-    adresse = instance.get('enquete/adresse') or ""
-    nina_text = instance.get('nina_text') or ""
-    telephones = [str(tel.get('enquete/telephones/numero'))
-                  for tel in instance.get('enquete/telephones', [])]
-
-    nb_epouses = get_int(instance, 'nb_epouses', 0)
+    adresse = instance.get('enquete/adresse', BLANK)
+    nina = instance.get('nina', BLANK)
+    telephones = instance.get('enquete/telephones', [])
+    if len(telephones) == 0:
+        telephones = BLANK
+    else:
+        telephones = concat([str(tel.get('enquete/telephones/numero'))
+                             for tel in telephones])
+    nb_epouses = get_int(instance, 'nb_epouses')
 
     # enfants
     logger.info("enfants")
-    nb_enfants = get_int(instance, 'nb_enfants')
-    nb_enfants_handicapes = get_int(instance, 'nb_enfants_handicapes')
-    nb_enfants_acharge = get_int(instance, 'nb_enfants_acharge')
+    nb_enfants = get_int(instance, 'nb_enfants', 0)
+    nb_enfants_handicapes = get_int(instance, 'nb_enfants_handicapes', 0)
+    nb_enfants_acharge = get_int(instance, 'nb_enfants_acharge', 0)
 
     # ressources
     salaire = get_int(instance, 'ressources/salaire')
@@ -150,14 +156,21 @@ def gen_social_survey_pdf(instance, qrcode):
          get_int(revenu, 'ressources/autres_revenus/montant-revenu'))
         for revenu in instance.get('ressources/autres_revenus', [])]
     total_autres_revenus = get_int(instance, 'ressources/total_autres_revenus')
-
+    autres_revenus_f = concat(["[{} : {}]".format(source_revenu, montant_revenu)
+                               for source_revenu, montant_revenu in autres_revenus], sep=". ")
     # charges
     loyer = get_int(instance, 'charges/loyer')
     impot = get_int(instance, 'charges/impot')
     dettes = get_int(instance, 'charges/dettes')
     aliments = get_int(instance, 'charges/aliments')
     sante = get_int(instance, 'charges/sante')
-    autres_charges = get_int(instance, 'charges/autres_charges')
+    autres_charges = [
+        (charge.get('charges/autres_charges/nature'),
+         get_int(charge, 'charges/autres_charges/montant_charge'))
+        for charge in instance.get('charges/autres_charges', [])]
+
+    autres_charges_f = concat(["[{} : {}]".format(nature, montant_charge)
+                               for nature, montant_charge in autres_charges], sep=". ")
 
     # habitat
     type_habitat = get_other(instance, 'habitat/type')
@@ -185,7 +198,6 @@ def gen_social_survey_pdf(instance, qrcode):
                ["DE L’ACTION HUMANITAIRE", "", "UN PEUPLE UN BUT UNE FOI"],
                ["ET DE LA RECONSTRUCTION DU NORD", "", ""],
                ["AGENCE NATIONALE D’ASSISTANCE MEDICALE (ANAM)", "", ""]]
-    # headers_t = Table(headers, colWidths=(160))
     headers_t = Table(headers, colWidths=150, rowHeights=11)
     story.append(headers_t)
     headers_t.setStyle(TableStyle([('SPAN', (1, 30), (1, 13)),
@@ -210,14 +222,12 @@ def gen_social_survey_pdf(instance, qrcode):
     story.append(Paragraph(draw_String(
         naissance, "à {}".format(lieu_naissance)), b_style))
     logger.info("Parent")
+    story.append(Paragraph(draw_String("N° NINA", nina), b_style))
     story.append(Paragraph(draw_String("Père", name_pere), b_style))
     story.append(Paragraph(draw_String("Mère", name_mere), b_style))
     story.append(Paragraph(draw_String("Profession", profession), b_style))
     story.append(Paragraph(draw_String("Adresse", adresse), b_style))
-    logger.info("NINA CARD")
-    story.append(Paragraph(draw_String("N° NINA", nina_text), b_style))
-    story.append(Paragraph(draw_String(
-        "Téléphones", concat(telephones)), b_style))
+    story.append(Paragraph(draw_String("Téléphones", telephones), b_style))
     story.append(Paragraph("COMPOSITION DE LA FAMILLE", h3))
     story.append(Paragraph("Situation des Epouses", h4))
     epouses = instance.get('epouses', [])
@@ -232,13 +242,12 @@ def gen_social_survey_pdf(instance, qrcode):
         nom_mere_epouse, prenoms_mere_epouse, name_mere_epouse = get_nom(
             epouse, p='epouses/e_m_')
 
-        region_epouse, cercle_epouse, commune_epouse, lieu_naissance_epouse = get_lieu_naissance(
-            epouse, 'epouses/e_')
+        region_epouse, cercle_epouse, commune_epouse, \
+            lieu_naissance_epouse = get_lieu_naissance(epouse, 'epouses/e_')
         type_naissance_epouse, annee_naissance_epouse, \
             ddn_epouse, naissance_epouse = get_dob(epouse, 'epouses/e_', True)
         profession_epouse = get_other(epouse, 'epouses/e_profession')
         nb_enfants_epouse = get_int(epouse, 'epouses/e_nb_enfants', 0)
-
         story.append(Paragraph(draw_String(
             "EPOUSE", "{}".format(nb + 1)), b_style))
         epouses = concat([name_epouse, str(nb_enfants_epouse) +
@@ -252,8 +261,6 @@ def gen_social_survey_pdf(instance, qrcode):
         story.append(Paragraph(draw_String(
             "Profession", profession_epouse), b_style))
     story.append(Paragraph("Situation des Enfants", h4))
-    # c.setFont('Courier', 10)
-    # row -= interligne
     # enfants
     logger.debug("Child")
     enfants = instance.get('enfants', [])
@@ -286,17 +293,14 @@ def gen_social_survey_pdf(instance, qrcode):
 
     story.append(Paragraph("AUTRES PERSONNES à la charge de l’enquêté", h4))
 
-    # # autres
+    # autres
     autres = instance.get('autres', [])
-
     if autres == []:
         story.append(Paragraph(BLANK, b_style))
-
     logger.debug("Other")
     for nb, autre in enumerate(autres):
         nom_autre, prenoms_autre, name_autre = get_nom(
             autre, p='autres/autre_')
-
         region_autre, cercle_autre, commune_autre, \
             lieu_naissance_autre = get_lieu_naissance(autre, 'autres/autre_')
         type_naissance_autre, annee_naissance_autre, \
@@ -304,30 +308,36 @@ def gen_social_survey_pdf(instance, qrcode):
         parente_autre = get_other(autre, 'autres/autre_parente')
         profession_autre = get_other(autre, 'autres/autre_profession')
         story.append(Paragraph("{nb}. {enfant}".format(nb=nb + 1, enfant=concat(
-            [name_autre or BLANK, naissance_autre, "à {lieu}".format(lieu=lieu_naissance_autre), parente_autre, profession_autre])), b_style))
+            [name_autre or BLANK, naissance_autre, "à {lieu}".format(
+                lieu=lieu_naissance_autre), parente_autre, profession_autre])),
+            b_style))
 
     # ressources
     logger.debug("Ressources")
     story.append(
-        Paragraph("RESSOURCES ET CONDITIONS DE VIE DE L’ENQUETE (E)", h4))
-
+        Paragraph("RESSOURCES ET CONDITIONS DE VIE DE L’ENQUETE (E)", h3))
+    story.append(
+        Paragraph("RESSOURCES", h4))
     story.append(Paragraph(
         concat(["Salaire : {}/mois".format(salaire),
                 "Pension : {}/mois".format(pension),
                 "Allocations : {}/mois".format(allocations)], sep=". "), b_style))
-    autres_revenus_f = ["[{}/{}]".format(source_revenu, montant_revenu)
-                        for source_revenu, montant_revenu in autres_revenus]
-    story.append(Paragraph(draw_String("Autre", concat(
-        autres_revenus_f, sep=". ")), b_style))
-    story.append(Paragraph(
-        "LES CHARGES DE L’ENQUETE (Préciser le montant et la période)", h4))
-    story.append(Paragraph(concat(["Loyer : {}".format(loyer), "Impot : {}".format(impot), "Dettes : {}".format(dettes), "Aliments : {}".format(aliments),
-                                   "Santé : {}".format(sante), ], sep=". "), b_style))
+
+    story.append(Paragraph(draw_String("Autres revenus",
+                                       autres_revenus_f), b_style))
+    story.append(Paragraph("CHARGES", h4))
+    story.append(Paragraph(concat(["Loyer : {}/mois".format(loyer),
+                                   "Impot : {}/an".format(impot),
+                                   "Dettes : {}".format(
+                                       dettes), "Aliments : {}/mois".format(aliments),
+                                   "Santé : {}/mois".format(sante), ], sep=". "), b_style))
     story.append(Paragraph(draw_String(
-        "Autres Charges", autres_charges), b_style))
-    story.append(Paragraph(draw_String("HABITAT", concat(
-        [type_habitat, materiau_habitat])), b_style))
-    story.append(Paragraph("EXPOSER DETAILLE DES FAITS", h4))
+        "Autres Charges", autres_charges_f), b_style))
+    story.append(Paragraph("HABITAT", h4))
+    story.append(Paragraph(
+        concat(["Type d’habitat : {}".format(type_habitat),
+                "Principal matériau des murs du logement : {}".format(materiau_habitat)]), b_style))
+    story.append(Paragraph("EXPOSER DETAILLE DES FAITS", h3))
     # antecedents
     logger.debug("Antecedents")
     story.append(Paragraph(draw_String("Antécédents personnels",
