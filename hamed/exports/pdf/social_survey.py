@@ -5,6 +5,7 @@
 import io
 import datetime
 import logging
+import math
 
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
@@ -19,8 +20,8 @@ BLANK = "néant"
 logger = logging.getLogger(__name__)
 
 
-def gen_social_survey_pdf(instance, qrcode):
-
+def gen_social_survey_pdf(target):
+    instance = target.dataset
     pdf_form = io.BytesIO()
 
     story = []
@@ -191,6 +192,20 @@ def gen_social_survey_pdf(instance, qrcode):
     diagnostic = instance.get('diagnostic') or BLANK
     diagnostic_details = instance.get('diagnostic-details') or BLANK
     recommande_assistance = get_bool(instance, 'observation') or BLANK
+
+    def addQRCodeToFrame(canvas, doc):
+        text = "ID: {}".format(target.identifier)
+        qrsize = 100
+        x = doc.width + doc.rightMargin
+        y = math.ceil(doc.height * 0.9)
+
+        canvas.saveState()
+        canvas.drawImage(
+            ImageReader(target.get_qrcode()),
+            x - qrsize / 2,
+            y, qrsize, qrsize)
+        canvas.drawCentredString(x, y, text)
+        canvas.restoreState()
 
     doc = SimpleDocTemplate(pdf_form, pagesize=A4, fontsize=3)
     logger.info("Headers")
@@ -370,14 +385,10 @@ def gen_social_survey_pdf(instance, qrcode):
     # signature_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8), ]))
     # story.append(signature_t)
 
-    # QR-code
-    # qrcode_image = Image(ImageReader(qrcode), 0, 0, 100, 100)
-    # story.append(qrcode_image)
-
     # Fait le 01-06-2016 à cercle-de-mopti
     # VISA DU CHEF DU SERVICE SOCIAL
     # SIGNATURE DE L’ENQUÊTEUR
-    doc.build(story)
+    doc.build(story, onFirstPage=addQRCodeToFrame)
 
     pdf_form.seek(0)  # make sure it's readable
 

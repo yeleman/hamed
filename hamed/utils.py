@@ -30,6 +30,6 @@ def gen_targets_csv(targets):
 def gen_targets_documents(targets):
 
     for target in targets:
-        survey = gen_social_survey_pdf(target.dataset, target.get_qrcode())
+        survey = gen_social_survey_pdf(target)
         with open('/tmp/{id}.pdf'.format(id=target.identifier), 'wb') as f:
             f.write(survey.read())
