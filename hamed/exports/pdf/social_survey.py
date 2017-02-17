@@ -24,14 +24,13 @@ def gen_social_survey_pdf(target):
     instance = target.dataset
     pdf_form = io.BytesIO()
 
+    colwidths = 160
+    rowheights = 14
     style = getSampleStyleSheet()["Normal"]
-    style.leading = 6
+    style.leading = 8
     style.fontSize = 8
 
-    def format_location(parts):
-        return " / ".join([part for part in parts if part])
-
-    def concat(parts, sep=" / "):
+    def concat(parts, sep=" &ndash; "):
         if isinstance(parts, str):
             parts = [parts]
         return sep.join([part for part in parts if part])
@@ -40,13 +39,13 @@ def gen_social_survey_pdf(target):
         region = data.get('{}region'.format(key))
         cercle = data.get('{}cercle'.format(key))
         commune = data.get('{}commune'.format(key))
-        lieu_naissance = format_location([commune, cercle, region])
+        lieu_naissance = concat([commune, cercle, region], " / ")
         return region, cercle, commune, lieu_naissance
 
     def get_lieu(data, key):
         region, cercle, commune, _ = get_lieu_naissance(data, key)
         village = data.get('{}village'.format(key))
-        lieu = format_location([village, commune, cercle, region])
+        lieu = concat([village, commune, cercle, region], "/")
         return region, cercle, commune, village, lieu
 
     def get_other(data, key):
@@ -57,7 +56,8 @@ def gen_social_survey_pdf(target):
     def get_int(data, key, default=0):
         try:
             return int(data.get(key, default))
-        except:
+        except Exception as e:
+            logger.info(e)
             return default
 
     def get_date(data, key):
@@ -184,14 +184,13 @@ def gen_social_survey_pdf(target):
     def addQRCodeToFrame(canvas, doc):
         text = "ID: {}".format(target.identifier)
         qrsize = 100
-        x = doc.width + doc.rightMargin
+        x = doc.width + doc.rightMargin - 40
         y = math.ceil(doc.height * 0.9)
+        print(y, x)
 
         canvas.saveState()
         canvas.drawImage(
-            ImageReader(target.get_qrcode()),
-            x - qrsize / 2,
-            y, qrsize, qrsize)
+            ImageReader(target.get_qrcode()), x - qrsize / 2, y, qrsize, qrsize)
         canvas.drawCentredString(x, y, text)
         canvas.restoreState()
 
@@ -200,37 +199,46 @@ def gen_social_survey_pdf(target):
                   </b></para>""".format(text), style)
 
     def draw_paragraph_sub_title_h2(text):
-        return Paragraph("""<para align=left spaceb=5><b><font size=10>{}</font>
+        return Paragraph("""<para align=left spaceb=8 spaceafter=8><b><font size=10>{}</font>
                   </b></para>""".format(text), style)
 
     def draw_paragraph_sub_title_h3(text):
-        return Paragraph("""<para align=left spaceb=5><b><font size=8>{}</font>
+        return Paragraph("""<para align=left spaceb=5 spaceafter=8><b><font size=8>{}</font>
                   </b></para>""".format(text), style)
 
-    def draw_paragraph(label, text):
-        if label != "":
-            label = "<font size=8><u>{}</u></font> : ".format(label)
-        return Paragraph(
-            """<para align=left spaceb=5> {label} {text}</para>""".format(
-                label=label, text=text), style)
+    def style_label(label):
+        return "<font size=8 ><u>{}</u></font> : ".format(label)
 
+    def draw_paragraph(label, text, indent=0):
+        if label != "":
+            label = style_label(label)
+        return Paragraph(
+            """<para align=left leftIndent={indent} spaceb=2 spaceafter=1> {label} {text}</para>""".format(
+                indent=indent, label=label, text=text), style)
+
+    def body_table(data):
+        table_data = Table(data)
+        table_data.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
+                                        ('ALIGN', (1, 1), (1, -1), 'LEFT')]))
+        return table_data
+
+    doc = SimpleDocTemplate(pdf_form, pagesize=A4, leftMargin=35)
     logger.info("Headers")
     headers = [["MINISTÈRE DE LA SOLIDARITÉ", "",  "    REPUBLIQUE DU MALI"],
                ["DE L’ACTION HUMANITAIRE", "", "UN PEUPLE UN BUT UNE FOI"],
                ["ET DE LA RECONSTRUCTION DU NORD", "", ""],
                ["AGENCE NATIONALE D’ASSISTANCE MEDICALE (ANAM)", "", ""]]
-    headers_t = Table(headers, colWidths=150, rowHeights=11)
-    headers_t.setStyle(TableStyle([('SPAN', (1, 30), (1, 13)),
-                                   ('ALIGN', (0, 0), (-1, -1), 'LEFT'), ]))
+    headers_t = Table(headers, rowHeights=rowheights, colWidths=colwidths)
+    headers_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8), ]))
 
     story = []
     story.append(headers_t)
     story.append(draw_paragraph_title("CONFIDENTIEL"))
 
     numero_enquete_t = Table([["FICHE D’ENQUETE SOCIALE N°.............../{year}"
-                               .format(year=datetime.datetime.now().year), ]],)
+                               .format(year=datetime.datetime.now().year), ]])
     numero_enquete_t.setStyle(TableStyle(
-        [('BOX', (0, 0), (-1, -1), 0.25, colors.black), ]))
+        [('BOX', (0, 0), (-1, -1), 0.30, colors.black), ]))
     story.append(numero_enquete_t)
     story.append(draw_paragraph("Identifiant enquêteur", numero_enquete))
     story.append(draw_paragraph("Objet de l’enquête", objet_enquete))
@@ -239,7 +247,8 @@ def gen_social_survey_pdf(target):
     logger.info("Enquêté")
     story.append(
         draw_paragraph("Concernant", concat([name, sexe, situation_matrioniale])))
-    story.append(draw_paragraph(naissance, "à {}".format(lieu_naissance)))
+    story.append(
+        draw_paragraph("", "{} à {}".format(naissance, lieu_naissance)))
     logger.info("Parent")
     story.append(draw_paragraph("N° NINA", nina))
     story.append(draw_paragraph("Père", name_pere))
@@ -255,89 +264,105 @@ def gen_social_survey_pdf(target):
     logger.info("Epouses")
     if epouses == []:
         story.append(draw_paragraph("", BLANK))
-    for nb, epouse in enumerate(epouses):
-        nom_epouse, prenoms_epouse, name_epouse = get_nom(
-            epouse, p='epouses/e_')
-        nom_pere_epouse, prenoms_pere_epouse, name_pere_epouse = get_nom(
-            epouse, p='epouses/e_p_')
-        nom_mere_epouse, prenoms_mere_epouse, name_mere_epouse = get_nom(
-            epouse, p='epouses/e_m_')
-        region_epouse, cercle_epouse, commune_epouse, lieu_naissance_epouse = get_lieu_naissance(
-            epouse, 'epouses/e_')
-        type_naissance_epouse, annee_naissance_epouse, ddn_epouse, naissance_epouse = get_dob(
-            epouse, 'epouses/e_', True)
-        profession_epouse = get_other(epouse, 'epouses/e_profession')
-        nb_enfants_epouse = get_int(epouse, 'epouses/e_nb_enfants', 0)
-        story.append(draw_paragraph_sub_title_h3(
-            "épouse : {}".format(nb + 1)))
-        epouses = concat([name_epouse, str(nb_enfants_epouse) +
-                          " enfant{p}".format(p="s" if nb_enfants_epouse > 1 else "")])
-        story.append(draw_paragraph("", epouses))
-        dob = "{naissance} à {lieu_naissance}".format(
-            naissance=naissance_epouse, lieu_naissance=lieu_naissance_epouse)
-        story.append(draw_paragraph("", dob))
-        story.append(draw_paragraph("Père", name_pere_epouse))
-        story.append(draw_paragraph("Mère", name_mere_epouse))
-        story.append(draw_paragraph("Profession", profession_epouse))
-    story.append(draw_paragraph_sub_title_h3("Situation des Enfants"))
+    else:
+        for nb, epouse in enumerate(epouses):
+            nom_epouse, prenoms_epouse, name_epouse = get_nom(
+                epouse, p='epouses/e_')
+            nom_pere_epouse, prenoms_pere_epouse, name_pere_epouse = get_nom(
+                epouse, p='epouses/e_p_')
+            nom_mere_epouse, prenoms_mere_epouse, name_mere_epouse = get_nom(
+                epouse, p='epouses/e_m_')
+            region_epouse, cercle_epouse, commune_epouse, lieu_naissance_epouse = get_lieu_naissance(
+                epouse, 'epouses/e_')
+            type_naissance_epouse, annee_naissance_epouse, ddn_epouse, naissance_epouse = get_dob(
+                epouse, 'epouses/e_', True)
+            profession_epouse = get_other(epouse, 'epouses/e_profession')
+            nb_enfants_epouse = get_int(epouse, 'epouses/e_nb_enfants', 0)
+            story.append(draw_paragraph_sub_title_h3(
+                "épouse : {}".format(nb + 1)))
+            epouses = concat([name_epouse, str(nb_enfants_epouse) +
+                              " enfant{p}".format(p="s" if nb_enfants_epouse > 1 else ""), profession_epouse])
+            story.append(draw_paragraph("", epouses, 10))
+            dob = "{naissance} à {lieu_naissance}".format(
+                naissance=naissance_epouse, lieu_naissance=lieu_naissance_epouse)
+            story.append(draw_paragraph("", dob, 10))
+            story.append(draw_paragraph("", concat(
+                ["{} {}".format(style_label("Père"), name_pere_epouse),
+                 "{} {}".format(style_label("Mère"), name_mere_epouse)]), 10))
     # enfants
+    story.append(draw_paragraph_sub_title_h3("Situation des Enfants"))
     logger.debug("Child")
     enfants = instance.get('enfants', [])
     if enfants == []:
         story.append(draw_paragraph("", BLANK))
-    for nb, enfant in enumerate(enfants):
-        nom_enfant, prenoms_enfant, name_enfant = get_nom(
-            enfant, p='enfants/enfant_')
-        nom_autre_parent, prenoms_autre_parent, name_autre_parent = get_nom(
-            instance, p='enfants/', s='-autre-parent')
-        region_enfant, cercle_enfant, commune_enfant, lieu_naissance_enfant = get_lieu_naissance(
-            enfant, 'enfants/enfant_')
-        type_naissance_enfant, annee_naissance_enfant, ddn_enfant, naissance_enfant = get_dob(
-            enfant, 'enfants/enfant_')
-        # situation
-        scolarise, scolarise_text = get_bool(enfant, 'enfants/scolarise')
-        handicape, handicape_text = get_bool(enfant, 'enfants/handicape')
-        acharge, acharge_text = get_bool(enfant, 'enfants/acharge')
-        nb_enfant_handicap = get_int(enfant, 'enfants/nb_enfant_handicap')
-        nb_enfant_acharge = get_int(enfant, 'enfants/nb_enfant_acharge')
+    else:
+        for nb, enfant in enumerate(enfants):
+            nom_enfant, prenoms_enfant, name_enfant = get_nom(
+                enfant, p='enfants/enfant_')
+            nom_autre_parent, prenoms_autre_parent, name_autre_parent = get_nom(
+                enfant, p='enfants/', s='-autre-parent')
+            region_enfant, cercle_enfant, commune_enfant, lieu_naissance_enfant = get_lieu_naissance(
+                enfant, 'enfants/enfant_')
+            type_naissance_enfant, annee_naissance_enfant, ddn_enfant, naissance_enfant = get_dob(
+                enfant, 'enfants/enfant_')
+            # situation
+            scolarise, scolarise_text = get_bool(
+                enfant, 'enfants/situation/scolarise')
+            handicape, handicape_text = get_bool(
+                enfant, 'enfants/situation/handicape')
+            acharge, acharge_text = get_bool(
+                enfant, 'enfants/situation/acharge')
+            # Scolarisé = SC; Handicapé = HP; À charge = AC; Autre parent = AP
+            story.append(draw_paragraph("", "{nb}. {enfant}".format(
+                nb=nb + 1, enfant=concat([name_enfant, naissance_enfant,
+                                          "à {lieu}".format(lieu=lieu_naissance_enfant), "SC ?: {}".format(scolarise_text), "HD ?: {}".format(
+                                              handicape_text), "AC ? : {}".format(acharge_text), "AP ? : {}".format(name_autre_parent)]))))
 
-        story.append(draw_paragraph("", "{nb}. {enfant}".format(
-            nb=nb + 1, enfant=concat([name_enfant or BLANK, naissance_enfant,
-                                      "à {lieu}".format(
-                                          lieu=lieu_naissance_enfant),
-                                      scolarise_text, handicape_text,
-                                      name_autre_parent]))))
-
+            # story.append(draw_paragraph("", "{nb}. {enfant}".format(
+            #     nb=nb + 1, enfant=concat([name_enfant, naissance_enfant,
+            #                               "à {lieu}".format(lieu=lieu_naissance_enfant), ]))))
+            # story.append(draw_paragraph("", concat(["SC ?: {}".format(scolarise_text), "HD ?: {}".format(
+            # handicape_text), "AC ? : {}".format(acharge_text), "AP ? :
+            # {}".format(name_autre_parent)]), 10))
+        nb_enfant = get_int(instance, 'nb_enfants')
+        nb_enfant_handicap = get_int(instance, 'nb_enfants_handicapes')
+        nb_enfant_acharge = get_int(instance, 'nb_enfant_acharge')
+        nb_enfants_scolarises = get_int(instance, 'nb_enfants_scolarises')
+        story.append(draw_paragraph("", concat(["Nombre d'enfant : {}".format(nb_enfant),
+                                                "Scolarisés : {}".format(
+                                                    nb_enfants_scolarises),
+                                                "Handicapé : {}".format(
+                                                    nb_enfant_handicap),
+                                                "À charge : {}".format(nb_enfants_acharge)])))
+    # autres
     story.append(draw_paragraph_sub_title_h2(
         "AUTRES PERSONNES à la charge de l’enquêté"))
-    # autres
     autres = instance.get('autres', [])
     if autres == []:
         story.append(draw_paragraph(BLANK))
-    logger.debug("Other")
-    for nb, autre in enumerate(autres):
-        nom_autre, prenoms_autre, name_autre = get_nom(
-            autre, p='autres/autre_')
-        region_autre, cercle_autre, commune_autre, lieu_naissance_autre = get_lieu_naissance(
-            autre, 'autres/autre_')
-        type_naissance_autre, annee_naissance_autre, ddn_autre, naissance_autre = get_dob(
-            autre, 'autres/autre_')
-        parente_autre = get_other(autre, 'autres/autre_parente')
-        profession_autre = get_other(autre, 'autres/autre_profession')
-        story.append(draw_paragraph("", "{nb}. {enfant}".format(nb=nb + 1, enfant=concat(
-            [name_autre or BLANK, naissance_autre, "à {lieu}".format(
-                lieu=lieu_naissance_autre), parente_autre, profession_autre]))))
-
+    else:
+        logger.debug("Other")
+        for nb, autre in enumerate(autres):
+            nom_autre, prenoms_autre, name_autre = get_nom(
+                autre, p='autres/autre_')
+            region_autre, cercle_autre, commune_autre, lieu_naissance_autre = get_lieu_naissance(
+                autre, 'autres/autre_')
+            type_naissance_autre, annee_naissance_autre, ddn_autre, naissance_autre = get_dob(
+                autre, 'autres/autre_')
+            parente_autre = get_other(autre, 'autres/autre_parente')
+            profession_autre = get_other(autre, 'autres/autre_profession')
+            story.append(draw_paragraph("", "{nb}. {enfant}".format(nb=nb + 1, enfant=concat(
+                [name_autre or BLANK, naissance_autre, "à {lieu}".format(
+                    lieu=lieu_naissance_autre), parente_autre, profession_autre])), 10))
     # ressources
     logger.debug("Ressources")
-    story.append(draw_paragraph_sub_title_h2(
-        "RESSOURCES ET CONDITIONS DE VIE DE L’ENQUETE (E)"))
+    story.append(
+        draw_paragraph_sub_title_h2("RESSOURCES ET CONDITIONS DE VIE DE L’ENQUETE (E)"))
     story.append(draw_paragraph_sub_title_h3("RESSOURCES"))
     story.append(
         draw_paragraph("", concat(["Salaire : {}/mois".format(salaire),
                                    "Pension : {}/mois".format(pension),
                                    "Allocations : {}/mois".format(allocations)], sep=". ")))
-
     story.append(draw_paragraph("Autres revenus", autres_revenus_f))
     story.append(draw_paragraph_sub_title_h3("CHARGES"))
     story.append(
@@ -354,20 +379,19 @@ def gen_social_survey_pdf(target):
     story.append(draw_paragraph_sub_title_h2("Exposé détaillé des faits"))
     # antecedents
     logger.debug("Antecedents")
-    story.append(draw_paragraph("Antécédents personnels",
-                                concat(antecedents_personnels)))
-    story.append(draw_paragraph("Détails Antécédents personnels",
-                                antecedents_personnels_details))
-    story.append(draw_paragraph("Antécédents familiaux",
-                                antecedents_familiaux))
-    story.append(draw_paragraph("Détails Antécédents familiaux",
-                                antecedents_familiaux_details))
-    story.append(draw_paragraph("Antécédents sociaux",
-                                antecedents_sociaux))
-    story.append(draw_paragraph("Détails Antécédents sociaux",
-                                antecedents_sociaux_details))
-    story.append(draw_paragraph("Situation actuelle",
-                                concat(situation_actuelle)))
+    story.append(
+        draw_paragraph("Antécédents personnels", concat(antecedents_personnels)))
+    story.append(draw_paragraph(
+        "Détails Antécédents personnels", antecedents_personnels_details))
+    story.append(
+        draw_paragraph("Antécédents familiaux", antecedents_familiaux))
+    story.append(
+        draw_paragraph("Détails Antécédents familiaux", antecedents_familiaux_details))
+    story.append(draw_paragraph("Antécédents sociaux", antecedents_sociaux))
+    story.append(
+        draw_paragraph("Détails Antécédents sociaux", antecedents_sociaux_details))
+    story.append(
+        draw_paragraph("Situation actuelle", concat(situation_actuelle)))
     story.append(draw_paragraph("Diagnostic", diagnostic))
     story.append(draw_paragraph("Diagnostic details", diagnostic_details))
     # signature_dict = instance.get("signature")
@@ -386,8 +410,6 @@ def gen_social_survey_pdf(target):
     # Fait le 01-06-2016 à cercle-de-mopti
     # VISA DU CHEF DU SERVICE SOCIAL
     # SIGNATURE DE L’ENQUÊTEUR
-
-    doc = SimpleDocTemplate(pdf_form, pagesize=A4, fontsize=20)
     doc.build(story, onFirstPage=addQRCodeToFrame)
 
     pdf_form.seek(0)  # make sure it's readable
