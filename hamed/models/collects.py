@@ -114,10 +114,12 @@ class Collect(models.Model):
             url = reverse('finalize_collect',
                           kwargs={'collect_id': self.id})
             label = "Finaliser la collecte"
-        elif self.status == self.FINALIZED:
-            url = reverse('export',
-                          kwargs={'collect_id': self.id})
-            label = "Exporter les données de la collecte"
+        else:
+            return None
+        # elif self.status == self.FINALIZED:
+        #     url = reverse('export',
+        #                   kwargs={'collect_id': self.id})
+        #     label = "Exporter les données de la collecte"
         return {'url': url, 'label': label}
 
     def change_status(self, new_status):

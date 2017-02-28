@@ -1,0 +1,24 @@
+{% if target.attachments %}
+<span class="label label-default">Enquêté</span>
+{% for key, attachment in target.attachments.items %}
+	{% if key != "signature" and attachment.labels %}
+	{% include "attachment_button.html" with attachment=attachment %} 
+	{% endif %}
+{% endfor %}
+
+{% if target.attachments.enfants|length %}
+{% for enfant in target.attachments.enfants %}
+<br /><span class="label label-default">Enfant {{ forloop.counter }}</span>
+{% for attachment in enfant.values %}{% if attachment.labels %}{% include "attachment_button.html" with attachment=attachment %} {% endif %}{% endfor %}
+
+{% endfor %}
+{% endif %}
+
+{% if target.attachments.epouses|length %}
+{% for epouse in target.attachments.epouses %}
+<br /><span class="label label-default">Épouse {{ forloop.counter }}</span>
+{% for attachment in epouse.values %}{% if attachment.labels %}{% include "attachment_button.html" with attachment=attachment %} {% endif %}{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% endif %}
