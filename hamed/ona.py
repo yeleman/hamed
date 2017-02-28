@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
+import io
 import logging
 
 import requests
@@ -61,8 +62,8 @@ def request(method, path, payload={}, headers={}, files={},
     func = requests.post if method == 'POST' else requests.get
     headers.update(get_auth_header())
     req = func(url=url, data=payload, files=files, headers=headers)
-    from pprint import pprint as pp ; pp(req.request.url)
-    from pprint import pprint as pp ; pp(req.request.headers)
+    # from pprint import pprint as pp ; pp(req.request.url)
+    # from pprint import pprint as pp ; pp(req.request.headers)
     try:
         assert req.status_code in expected_codes
         return req.json()
@@ -112,8 +113,8 @@ def get_form_data(form_pk):
 
 
 def get_media_size(filename):
-    url = get_url('/{media}/{fname}'.format(media=ONA_MEDIA,
-                                            fname=filename))
+    url = get_url('{media}/{fname}'.format(media=ONA_MEDIA,
+                                           fname=filename))
     resp = requests.head(url)
     return int(resp.headers['Content-Length'])
 
@@ -127,3 +128,18 @@ def upload_csv_media(form_pk, media_csv, media_fname):
         files={'data_file':  (media_fname, media_csv,
                               CSV_MIME, {'Expires': '0'})},
         expected_codes=(201,))
+
+
+def download_media(path):
+    url = get_url(path)
+    req = requests.get(url)
+
+    try:
+        assert req.status_code == 200
+        data = io.BytesIO(req.content)
+        data.seek(0)
+        return data
+    except AssertionError:
+        exp = ONAAPIError.from_request(req)
+        logger.error("ONA Request Error. {exp}".format(exp=exp))
+        logger.exception(exp)
