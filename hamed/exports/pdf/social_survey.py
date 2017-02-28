@@ -15,6 +15,7 @@ from reportlab.platypus import (Paragraph, Table, TableStyle, Image,
                                 SimpleDocTemplate)
 
 from hamed.instance import Instance
+from hamed.ona import download_media
 
 BLANK = "néant"
 logger = logging.getLogger(__name__)
@@ -406,6 +407,11 @@ def gen_social_survey_pdf(target):
     # signature_t = Table(signature, colWidths=150, rowHeights=90)
     # signature_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8), ]))
     # story.append(signature_t)
+
+    sig_attachment = target.get_attachment('signature')
+    signature = download_media(sig_attachment.get('download_url'))
+    signature_img = Image(signature, width=100, height=100)
+    story.append(signature_img)
 
     # Fait le 01-06-2016 à cercle-de-mopti
     # VISA DU CHEF DU SERVICE SOCIAL
