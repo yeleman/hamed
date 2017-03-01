@@ -5,6 +5,8 @@
 import logging
 
 from django.core.management.base import BaseCommand, CommandError
+from django.utils import translation
+from django.conf import settings
 
 from hamed.models.targets import Target
 from hamed.utils import gen_targets_documents
@@ -20,6 +22,7 @@ class Command(BaseCommand):
                             help="Target ident to generate doc for"),
 
     def handle(self, *args, **kwargs):
+        translation.activate(settings.LANGUAGE_CODE)
         ident = kwargs.get('ident')
         target = Target.get_or_none(ident)
         if target is None:
@@ -31,3 +34,4 @@ class Command(BaseCommand):
 
         # generate paper form
         gen_targets_documents([target])
+        translation.deactivate()
