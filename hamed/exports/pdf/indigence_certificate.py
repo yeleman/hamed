@@ -9,13 +9,12 @@ import math
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import (Paragraph, Table, TableStyle,
-                                SimpleDocTemplate)
+from reportlab.platypus import (
+    Paragraph, Table, TableStyle, SimpleDocTemplate)
 
 from django.utils import timezone
 from django.template.defaultfilters import date as date_filter
 
-from hamed.instance import Instance
 from hamed.exports.common import (get_lieu_naissance, get_lieu, get_other,
                                   get_date, get_dob, get_nom)
 

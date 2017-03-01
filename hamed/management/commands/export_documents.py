@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 "Error: Unable to find Target with ID `{ident}`"
                 .format(ident=ident))
 
-        logger.info(target)
+        # logger.info(target)
 
         # generate paper form
         gen_targets_documents([target])

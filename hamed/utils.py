@@ -41,3 +41,12 @@ def gen_targets_documents(targets):
         indigence = gen_indigence_certificate_pdf(target)
         with open('/tmp/indigence_{id}.pdf'.format(id=target.identifier), 'wb') as f:
             f.write(indigence.read())
+
+
+def get_attachment(dataset, question_value):
+    ''' retrieve a specific attachment dict for a question value '''
+    if question_value is not None:
+        for attachment in dataset.get('_attachments', []):
+            if attachment.get('filename', "").endswith(question_value):
+                return attachment
+    return None

@@ -7,9 +7,8 @@ import logging
 import math
 
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import (
     Paragraph, Table, TableStyle, SimpleDocTemplate)
 
@@ -109,6 +108,7 @@ def gen_residence_certificate_pdf(target):
     story.append(draw_paragraph(
         "<b>Bamako, le</b> {}".format(date_filter(timezone.now())), align="right"))
     story.append(draw_paragraph("<b>P/</b> le Maire <b>PO</b>", align="right"))
+
     doc.build(story, onFirstPage=addQRCodeToFrame)
 
     pdf_form.seek(0)  # make sure it's readable

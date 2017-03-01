@@ -17,10 +17,21 @@
 <p><em>Nb de soumissions:</em> {{ collect.nb_submissions|default_if_none:"n/a" }}</p>
 <p><em>Nb d'indigents:</em> {{ collect.nb_indigents|default_if_none:"n/a" }}</p>
 <p><em>Nb de médias:</em> {{ collect.nb_medias|default_if_none:"n/a" }}</p>
-<p><em>Poids des médias:</em> {{ collect.medias_size|default_if_none:"n/a" }}</p>
+<p><em>Poids des médias:</em> {{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}</p>
 {% else %}
-<p><em>Nb de soumissions:</em> {{ ona_collect.num_of_submissions|default_if_none:"n/a" }}</p>
+<p><em>Nb de soumissions ONA:</em> {{ ona_collect.num_of_submissions|default_if_none:"n/a" }}</p>
 {% endif %}
+
+<a href="{% url 'collect_data' collect.id %}"><button class="btn btn-default">Voir les cibles</button></a>
+
 <hr />
-<p><a href="{{ collect.get_next_step.url }}"><button class="btn btn-primary">{{ collect.get_next_step.label }}</button></a></p>
+{% if collect.get_next_step %}
+<h2>Prochaine étape</h2>
+<form action="{{ collect.get_next_step.url }}" method="POST">
+{% csrf_token %}
+<input type="submit" class="btn btn-default btn-primary" value="{{ collect.get_next_step.label }}"></button></form>
+{% else %}
+<h2>Exporter les données</h2>
+<p>…</p>
+{% endif %}
 {% endblock %}

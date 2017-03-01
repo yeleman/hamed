@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ collect.name }}</h1>
+<p><a href="{% url 'collect' collect.id %}"><button class="btn btn-primary">Retour</button></a></p>
+<hr />
+<p><em>Nb de soumissions:</em> {{ collect.nb_submissions|default_if_none:"n/a" }}</p>
+<p><em>Nb d'indigents:</em> {{ collect.nb_indigents|default_if_none:"n/a" }}</p>
+<p><em>Nb de médias:</em> {{ collect.nb_medias|default_if_none:"n/a" }}</p>
+<p><em>Poids des médias:</em> {{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}</p>
+<hr />
+{% if collect.targets.count %}
+<table class="table table-striped">
+<tr>
+	<th>ID</th>
+	<th>Nom</th>
+	<th>Age</th>
+	<th>Sexe</th>
+	<th>Enfants</th>
+	<th>Épouses</th>
+	<th>Village</th>
+	<th>Indigent</th>
+	<th>Médias</th>
+</tr>
+{% endif %}
+{% for target in collect.targets.all %}
+<tr>
+	<th>{{ target.identifier }}</th>
+	<td>{{ target.name}}</td>
+	<td>{{ target.age }}a</td>
+	<td>{{ target.verbose_sex }}</td>
+	<td>{{ target.dataset.nb_enfants }}</td>
+	<td>{{ target.dataset.nb_epouses|default:"0" }}</td>
+	<td>{{ target.village|title }}</td>
+	<td>{{ target.is_indigent|yesno:"oui,non,n/c" }}</td>
+	<td>{% include "attachments.html" with target=target %}</td>
+</tr>
+{% empty %}
+<p>Aucune soumission.</p>
+{% endfor %}
+{% if collect.targets.count %}</table>{% endif %}
+
+{% endblock %}
