@@ -46,8 +46,6 @@ class ONAAPIError(Exception):
         # else:
         #     data = _oauth()
 
-        from pprint import pprint as pp ; pp(request.text)
-
         return cls(http_code=request.status_code, **data)
 
     @classmethod

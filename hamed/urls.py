@@ -10,7 +10,7 @@ from hamed import views
 from hamed.admin import admin_site
 
 urlpatterns = [
-    url(r'^$', views.home),
+    url(r'^$', views.home, name='home'),
     url(r'^collect/(?P<collect_id>[0-9]+)/?$', views.collect, name='collect'),
     url(r'^collect/(?P<collect_id>[0-9]+)/targets/?$',
         views.collect_data, name='collect_data'),

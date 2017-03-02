@@ -35,10 +35,10 @@ def gen_targets_documents(targets):
             f.write(survey.read())
 
 
-def get_attachment(dataset, question_value):
+def get_attachment(dataset, question_value, main_key='_attachments'):
     ''' retrieve a specific attachment dict for a question value '''
     if question_value is not None:
-        for attachment in dataset.get('_attachments', []):
+        for attachment in dataset.get(main_key, []):
             if attachment.get('filename', "").endswith(question_value):
                 return attachment
     return None

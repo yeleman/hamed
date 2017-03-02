@@ -191,6 +191,9 @@ class Target(models.Model):
         for key, label in labels.items():
             attachment = get_attachment(self.dataset, self.dataset.get(key))
             if attachment is None:
+                attachment = get_attachment(
+                    self.dataset, self.dataset.get(key),
+                    main_key='_scan_attachments')
                 continue
             attachment['labels'] = label
             attachment['hamed_url'] = label['slug']
@@ -253,8 +256,6 @@ class Target(models.Model):
         if at_index is None:
             return [att.get(slug)
                     for att in self.attachments().get(within, [])]
-
-        from pprint import pprint as pp ; pp(self.attachments().get(within))
 
         try:
             return self.attachments().get(within)[at_index].get(slug)

@@ -40,33 +40,53 @@ def get_auth_header():
         token=Settings.get_or_none(Settings.ONA_TOKEN).value)}
 
 
-def post(path, payload={}, headers={}, files={},
-         expected_codes=(200, 201), silent_failure=False):
-    return request(method='POST', path=path, payload=payload,
+def post(path, payload={}, headers={}, files={}, params={},
+         expected_codes=(200, 201), as_json=True, silent_failure=False):
+    return request(method='POST', path=path, payload=payload, params=params,
                    headers=headers, files=files,
                    expected_codes=expected_codes,
+                   as_json=as_json,
                    silent_failure=silent_failure)
 
 
-def get(path, payload={}, headers={}, files={},
-        expected_codes=(200, 204), silent_failure=False):
+def delete(path, payload={}, headers={}, files={}, params={},
+           expected_codes=(200, 201), as_json=False, silent_failure=False):
+    return request(method='DELETE', path=path, payload=payload, params=params,
+                   headers=headers, files=files,
+                   expected_codes=expected_codes,
+                   as_json=as_json,
+                   silent_failure=silent_failure)
+
+
+def get(path, payload={}, headers={}, files={}, params={},
+        expected_codes=(200, 204), as_json=True, silent_failure=False):
     return request(method='GET', path=path,
+                   payload=payload, params=params,
                    headers=headers, files=files,
                    expected_codes=expected_codes,
+                   as_json=as_json,
                    silent_failure=silent_failure)
 
 
-def request(method, path, payload={}, headers={}, files={},
-            silent_failure=False, expected_codes=(200, 201, 204)):
+def request(method, path, payload={}, headers={}, files={}, params={},
+            expected_codes=(200, 201, 204), as_json=True,
+            silent_failure=False):
     url = get_url(path)
-    func = requests.post if method == 'POST' else requests.get
+    methods = {'POST': requests.post, 'DELETE': requests.delete,
+               'GET': requests.get, 'OPTIONS': requests.options,
+               'HEAD': requests.head, 'PUT': requests.put,
+               'PATCH': requests.patch}
+    func = methods.get(method, requests.get)
     headers.update(get_auth_header())
-    req = func(url=url, data=payload, files=files, headers=headers)
+    req = func(url=url, params=params, data=payload,
+               files=files, headers=headers)
     # from pprint import pprint as pp ; pp(req.request.url)
     # from pprint import pprint as pp ; pp(req.request.headers)
     try:
         assert req.status_code in expected_codes
-        return req.json()
+        if as_json:
+            return req.json()
+        return req.text
     except AssertionError:
         exp = ONAAPIError.from_request(req)
         logger.error("ONA Request Error. {exp}".format(exp=exp))
@@ -87,6 +107,7 @@ def get_form_detail(form_pk):
 
 
 def toggle_downloadable_ona_form(form_pk, downloadable):
+    # TODO: move to patch method
     url = get_url(get_api_path('/forms/{}'.format(form_pk)))
     req = requests.patch(url=url,
                          headers=get_auth_header(),
@@ -106,6 +127,11 @@ def disable_form(form_pk):
 
 def enable_form(form_pk):
     return toggle_downloadable_ona_form(form_pk, True)
+
+
+def delete_form(form_pk):
+    return delete(get_api_path('/forms/{}'.format(form_pk)),
+                  expected_codes=(204,), as_json=False)
 
 
 def get_form_data(form_pk):
@@ -130,6 +156,23 @@ def upload_csv_media(form_pk, media_csv, media_fname):
         expected_codes=(201,))
 
 
+def delete_media(collect, media_id):
+    session = requests.Session()
+
+    # first authenticate with token
+    resp = session.get(get_url("/token-auth"), headers=get_auth_header())
+    assert resp.status_code == 200
+
+    # simulate click on remove button
+    path = "/{username}/forms/{form_id}/formid-media/{media_id}".format(
+        username=Settings.ona_username(),
+        form_id=collect.ona_form_id(),
+        media_id=media_id)
+    resp = session.get(url=get_url(path),
+                       params={"del": "true"})
+    assert resp.status_code in (302, 200)
+
+
 def download_media(path):
     url = get_url(path)
     req = requests.get(url)
@@ -143,3 +186,14 @@ def download_media(path):
         exp = ONAAPIError.from_request(req)
         logger.error("ONA Request Error. {exp}".format(exp=exp))
         logger.exception(exp)
+
+
+def get_media_id(form_pk, media_fname):
+    resp = get(get_api_path("/metadata.json"), params={"xform": form_pk})
+    filtered = [data for data in resp
+                if data['xform'] == form_pk
+                and data['data_value'] == media_fname]
+    try:
+        return filtered[0]['id']
+    except IndexError:
+        return None

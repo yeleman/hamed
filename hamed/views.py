@@ -13,15 +13,20 @@ from django.contrib import messages
 from django import forms
 
 from hamed.models.collects import Collect, Target
-from hamed.ona import (
-    get_form_detail, upload_xlsform,
-    disable_form, get_form_data, upload_csv_media,
-    download_media)
-from hamed.exports.xlsx.xlsform import gen_xlsform
-from hamed.utils import gen_targets_documents
+from hamed.ona import get_form_detail, download_media
+from hamed.steps.start_collect import StartCollectTaskCollection
+from hamed.steps.end_collect import EndCollectTaskCollection
+from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 
 
 logger = logging.getLogger(__name__)
+
+
+class NewCollectForm(forms.ModelForm):
+
+    class Meta:
+        model = Collect
+        fields = ['commune', 'suffix']
 
 
 def home(request):
@@ -29,9 +34,21 @@ def home(request):
         'collects': {
             'actives': Collect.active.all(),
             'archives': Collect.archived.all(),
-        }
+        },
+        'form': NewCollectForm(),
     }
     return render(request, 'home.html', context)
+
+
+def collect(request, collect_id):
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("No collect with ID `{}`".format(collect_id))
+    context = {
+        'collect': collect,
+        'ona_collect': get_form_detail(collect.ona_form_pk)}
+
+    return render(request, 'collect.html', context)
 
 
 def collect_data(request, collect_id):
@@ -44,7 +61,93 @@ def collect_data(request, collect_id):
     return render(request, 'collect_data.html', context)
 
 
+@require_POST
+def start_collect(request):
+    def fail(message):
+        messages.error(request, message)
+        return redirect('home')
+
+    # make sure form is valid before processing
+    form = NewCollectForm(request.POST)
+    if not form.is_valid():
+        errors = "\n".join(form.errors['__all__'])
+        return fail("Informations incorrectes pour créér la collecte : {all}"
+                    .format(all=errors))
+
+    tc = StartCollectTaskCollection(form=form)
+    tc.process()
+    if tc.successful:
+        messages.success(request, "Successfuly created Collect “{}”"
+                                  .format(tc.output.get('collect')))
+        return redirect('collect', tc.output.get('collect').id)
+    elif not tc.clean_state:
+        return fail("Unable to create collect. "
+                    "Error while reverting to previous state: {}"
+                    .format(tc.exception))
+    else:
+        return fail("Unable to create Collect. Reverted to previous state. {}"
+                    .format(tc.exception))
+
+
+@require_POST
+def end_collect(request, collect_id):
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("No collect with ID `{}`".format(collect_id))
+
+    def fail(message):
+        messages.error(request, message)
+        return redirect('collect', collect_id=collect.id)
+
+    tc = EndCollectTaskCollection(collect=collect)
+    tc.process()
+    if tc.successful:
+        messages.success(request, "Successfuly ended Collect “{}”"
+                                  .format(collect))
+        return redirect('collect', collect.id)
+    elif not tc.clean_state:
+        return fail("Unable to end collect. "
+                    "Error while reverting to previous state: {}"
+                    .format(tc.exception))
+    else:
+        return fail("Unable to end Collect. Reverted to previous state. {}"
+                    .format(tc.exception))
+
+
+@require_POST
+def finalize_collect(request, collect_id):
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("No collect with ID `{}`".format(collect_id))
+
+    def fail(message):
+        messages.error(request, message)
+        return redirect('collect', collect_id=collect.id)
+
+    tc = FinalizeCollectTaskCollection(collect=collect)
+    tc.process()
+    if tc.successful:
+        messages.success(request, "Successfuly finalized Collect “{}”"
+                                  .format(collect))
+        return redirect('collect', collect.id)
+    elif not tc.clean_state:
+        return fail("Unable to finalize collect. "
+                    "Error while reverting to previous state: {}"
+                    .format(tc.exception))
+    else:
+        return fail("Unable to finalize Collect. "
+                    "Reverted to previous state. {}"
+                    .format(tc.exception))
+
+
 def attachment_proxy(request, fname):
+    ''' finds a media from it's filename, downloads it from ONA and serves it
+
+        filename is hamed-generated one which includes additional info.
+        It is used for single-entry viewing/downloading only (not exports) '''
+
     target_id, cfname = fname.split("_", 1)
 
     target = Target.get_or_none(target_id)
@@ -65,7 +168,6 @@ def attachment_proxy(request, fname):
         index = None
     slug = os.path.splitext(filename)[0]
 
-    print(slug, within, index)
     attachment = target.get_attachment(slug, within, index)
     if attachment is None:
         raise Http404("No attachment with name `{}`".format(fname))
@@ -73,195 +175,3 @@ def attachment_proxy(request, fname):
     return HttpResponse(
         download_media(attachment.get('download_url')),
         content_type=attachment.get('mimetype'))
-
-
-def collect(request, collect_id):
-    collect = Collect.get_or_none(collect_id)
-    if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
-    context = {
-        'collect': collect,
-        'ona_collect': get_form_detail(collect.ona_form_pk)}
-
-    return render(request, 'collect.html', context)
-
-
-class NewCollectForm(forms.ModelForm):
-
-    class Meta:
-        model = Collect
-        fields = ['commune', 'suffix']
-
-
-def start_collect(request):
-    context = {'state': 'creation'}
-
-    if request.method == 'POST':
-        # handle django form
-        form = NewCollectForm(request.POST)
-        if form.is_valid():
-            try:
-                # create actual Collect
-                collect = form.save()
-                # generate standard XLSForm for id and title
-                xlsx = gen_xlsform(
-                    'hamed/fixtures/enquete-sociale-mobile.xlsx',
-                    form_title=collect.form_title(),
-                    form_id=collect.ona_form_id())
-                try:
-                    # upload xlsform to ONA
-                    resp = upload_xlsform(xlsx)
-                    from pprint import pprint as pp ; pp(resp)
-
-                    # save ONA primary key as required by API
-                    collect.ona_form_pk = resp['formid']
-                    collect.save()
-
-                    messages.success(request, "Collect created")
-                    return redirect('collect', collect_id=collect.id)
-
-                except Exception as exp:
-                    logger.exception(exp)
-                    collect.delete()
-                    context['state'] = 'failed'
-            except:
-                context['state'] = 'failed'
-                raise
-        else:
-            context['state'] = 'failed'
-            print("form is not valid")
-    else:
-        form = NewCollectForm()
-
-    context.update({'form': form})
-
-    return render(request, 'start_collect.html', context)
-
-
-@require_POST
-def end_collect(request, collect_id):
-    collect = Collect.get_or_none(collect_id)
-    if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
-
-    def fail(message):
-        messages.error(request, message)
-        return redirect('collect', collect_id=collect.id)
-
-    # disable form on ONA
-    try:
-        disable_form(collect.ona_form_pk)
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Unable to disable ONA form `{pk}`: {exp}"
-                    .format(pk=collect.ona_form_pk, exp=exp))
-
-    # download data
-    try:
-        data = get_form_data(collect.ona_form_pk)
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Unable to download ONA data for form `{pk}`: {exp}"
-                    .format(pk=collect.ona_form_pk, exp=exp))
-
-    # populate data-related fields
-    try:
-        collect.process_form_data(data)
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while processing form data. {exp}"
-                    .format(exp=exp))
-
-    # generate PDF files for all targets
-    try:
-        gen_targets_documents(collect.targets.all())
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while generating PDF documents for targets. {exp}"
-                    .format(exp=exp))
-
-    # generate itemsets CSV
-    try:
-        targets_csv = collect.get_targets_csv()
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while generating certifcates-scan form CSV. {exp}"
-                    .format(exp=exp))
-
-    # generate scan xlsx
-    try:
-        print(collect.ona_scan_form_id(), collect.scan_form_title())
-        xlsx = gen_xlsform('hamed/fixtures/scan-certificat.xlsx',
-                           form_id=collect.ona_scan_form_id(),
-                           form_title=collect.scan_form_title())
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while generating certificates-scan form. {exp}"
-                    .format(exp=exp))
-
-    # upload scan xlsx to ONA
-    try:
-        resp = upload_xlsform(xlsx)
-        from pprint import pprint as pp ; pp(resp)
-
-        # save ONA primary key as required by API
-        collect.ona_scan_form_pk = resp['formid']
-        collect.save()
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while uploading certificates-scan form. {exp}"
-                    .format(exp=exp))
-
-    # add itemsets CSV to scan form
-    try:
-        resp = upload_csv_media(form_pk=collect.ona_scan_form_pk,
-                                media_csv=targets_csv,
-                                media_fname='targets.csv')
-        from pprint import pprint as pp ; pp(resp)
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while uploading certificates-scan form CSV. {exp}"
-                    .format(exp=exp))
-    else:
-        collect.change_status(collect.ENDED)
-
-    messages.success(request, "Collect ended")
-
-    return redirect('collect', collect_id=collect.id)
-
-
-@require_POST
-def finalize_collect(request, collect_id):
-
-    # retrieve collect ID / Collect
-    collect = Collect.get_or_none(collect_id)
-    if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
-
-    def fail(message):
-        messages.error(request, message)
-        return redirect('collect', collect_id=collect.id)
-
-    # disable scan form on ONA
-    try:
-        disable_form(collect.ona_scan_form_pk)
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Unable to disable ONA form `{pk}`: {exp}"
-                    .format(pk=collect.ona_scan_form_pk, exp=exp))
-
-    # download data and update each Target
-    try:
-        data = get_form_data(collect.ona_scan_form_pk)
-        from pprint import pprint as pp ; pp(data)
-        collect.process_scan_form_data(data)
-    except Exception as exp:
-        logger.exception(exp)
-        return fail("Error while processing scan form data. {exp}"
-                    .format(exp=exp))
-    else:
-        collect.change_status(collect.FINALIZED)
-
-    messages.success(request, "Collect finalized")
-    return redirect('collect', collect_id=collect.id)
-

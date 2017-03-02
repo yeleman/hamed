@@ -25,5 +25,24 @@ class Settings(models.Model):
         except cls.DoesNotExist:
             return None
 
+    @classmethod
+    def get_value_or_none(cls, key):
+        try:
+            return cls.objects.get(key=key).value
+        except cls.DoesNotExist:
+            return None
+
     def __str__(self):
         return self.key
+
+    @classmethod
+    def ona_server(cls):
+        return cls.get_value_or_none(cls.ONA_SERVER)
+
+    @classmethod
+    def ona_username(cls):
+        return cls.get_value_or_none(cls.ONA_USERNAME)
+
+    @classmethod
+    def ona_token(cls):
+        return cls.get_value_or_none(cls.ONA_TOKEN)
