@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
+{% block title %}{{ collect.name }}{% endblock %}
+
 {% block content %}
-<h1>{{ collect.name }}</h1>
-<p><strong>{{ collect.verbose_status }}</strong></p>
-<hr />
+<h2>État de la collecte</h2>
+<p><em>Statut:</em> {{ collect.verbose_status }}</p>
 <p><em>Démarré le:</em> {{ collect.started_on }}</p>
 {% if collect.has_ended %}
 <p><em>Terminée le:</em> {{ collect.ended_on }}</p>

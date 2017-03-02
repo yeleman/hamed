@@ -1,13 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Collectes du cercle{% endblock %}
 {% block content %}
 
 <h2>Collectes en cours</h2>
 {% include "collects_table.html" with collects=collects.actives switch="active" %}
-<p><a href="{% url 'start_collect' %}"><img style="width: 1.5em;" src="{% static "icons/new.svg" %}"> Nouvelle collecte</a></p>
+
+<p><button class="btn btn-default" id="new-collect"><img style="width: 1.5em;" src="{% static "icons/new.svg" %}"> Nouvelle collecte</button></p>
+
+<div class="panel panel-primary hidden" id="new-collect-panel">
+	<div class="panel-heading">
+		<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		<h3 class="panel-title">Nouvelle collecte</h3></div>
+	<div class="panel-body">
+	<form action="{% url 'start_collect' %}" method="POST">
+	{% csrf_token %}
+	{{ form }}
+	<input type="submit" class="btn btn-primary" value="Créer la collecte">
+	</form>
+	</div>
+</div>
 
 <h2>Collectes archivées</h2>
 {% include "collects_table.html" with collects=collects.archives  switch="archives" %}
 
+{% endblock %}
+
+
+{% block onJQready %}
+$('.close').on('click', function(e) {
+	$('#new-collect-panel').removeClass('visible');
+	$('#new-collect-panel').addClass('hidden');
+});
+$('#new-collect').on('click', function (e) {
+	$('#new-collect-panel').removeClass('hidden');
+	$('#new-collect-panel').addClass('visible');
+});
 {% endblock %}

@@ -4,11 +4,11 @@
 <tr>
 	<th>Collecte</th>
 	<th>Statut</th>
+	<th>Créée le</th>
 	<th>Nb. cibles</th>
 	<th>Nb. indigents</th>
 	<th>Nb. refus</th>
-	<th>Nb. photos</th>
-	<th>Poids photos</th>
+	<th colspan="2">Médias</th>
 </tr>
 {% endif %}
 {% endif %}
@@ -16,6 +16,7 @@
 <tr>
 	<td><a href="{% url 'collect' collect.id %}">{{ collect.name }}</a></td>
 	<td>{{ collect.verbose_status }}</td>
+	<td>{{ collect.started_on }}</td>
 	{% if switch != "active" %}
 	<td>{{ collect.nb_submissions }}</td>
 	<td>{{ collect.nb_indigents }}</td>
