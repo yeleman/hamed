@@ -13,7 +13,7 @@ from django.utils import timezone
 from jsonfield.fields import JSONField
 
 from hamed.identifiers import full_random_id
-from hamed.utils import get_attachment
+from hamed.utils import get_attachment, PERSONAL_FILES
 
 logger = logging.getLogger(__name__)
 
@@ -223,7 +223,6 @@ class Target(models.Model):
 
         # loop on children to apply same process
         for index, children in enumerate(self.dataset.get('enfants', [])):
-            print(index, children)
             children_data = {}
             for key, label in children_labels.items():
                 attachment = get_attachment(self.dataset, children.get(key))
@@ -261,3 +260,11 @@ class Target(models.Model):
             return self.attachments().get(within)[at_index].get(slug)
         except IndexError:
             return None
+
+    def get_folder_fname(self):
+        return self.fname()
+
+    def get_folder_path(self):
+        return os.path.join(self.collect.get_documents_path(),
+                            PERSONAL_FILES,
+                            self.get_folder_fname())

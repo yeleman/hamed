@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
+import os
 import logging
 from collections import OrderedDict
 
 from django.db import models
 from django.urls import reverse
+from django.conf import settings
 from django.utils import timezone
 
 from hamed.utils import gen_targets_csv
@@ -299,3 +301,7 @@ class Collect(models.Model):
 
     def get_targets_csv(self):
         return gen_targets_csv(self.targets.all())
+
+    def get_documents_path(self):
+        return os.path.join(settings.COLLECT_DOCUMENTS_FOLDER,
+                            self.ona_form_id())

@@ -179,7 +179,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
+COLLECT_DOCUMENTS_FOLDER = os.path.join(BASE_DIR, "Collectes-RAMED")
+
 try:
-    from hamed.local_settings import *
+    from hamed.settings_local import *
 except ImportError:
     pass
