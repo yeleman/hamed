@@ -7,6 +7,8 @@ import io
 import csv
 
 from hamed.exports.pdf.social_survey import gen_social_survey_pdf
+from hamed.exports.pdf.indigence_certificate import gen_indigence_certificate_pdf
+from hamed.exports.pdf.residence_certificate import gen_residence_certificate_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,12 @@ def gen_targets_documents(targets):
         survey = gen_social_survey_pdf(target)
         with open('/tmp/{id}.pdf'.format(id=target.identifier), 'wb') as f:
             f.write(survey.read())
+        residence = gen_residence_certificate_pdf(target)
+        with open('/tmp/residence_{id}.pdf'.format(id=target.identifier), 'wb') as f:
+            f.write(residence.read())
+        indigence = gen_indigence_certificate_pdf(target)
+        with open('/tmp/indigence_{id}.pdf'.format(id=target.identifier), 'wb') as f:
+            f.write(indigence.read())
 
 
 def get_attachment(dataset, question_value, main_key='_attachments'):

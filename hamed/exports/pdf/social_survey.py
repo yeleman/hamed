@@ -10,12 +10,13 @@ import math
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import (Paragraph, Table, TableStyle, Image,
                                 SimpleDocTemplate)
 
-from hamed.instance import Instance
 from hamed.ona import download_media
+from hamed.exports.common import (concat, get_lieu_naissance, get_lieu, get_other,
+                                  get_int, get_date, get_dob, get_bool, get_nom)
 
 BLANK = "néant"
 logger = logging.getLogger(__name__)
@@ -25,74 +26,9 @@ def gen_social_survey_pdf(target):
     instance = target.dataset
     pdf_form = io.BytesIO()
 
-    colwidths = 160
-    rowheights = 14
     style = getSampleStyleSheet()["Normal"]
     style.leading = 8
     style.fontSize = 8
-
-    def concat(parts, sep=" &ndash; "):
-        if isinstance(parts, str):
-            parts = [parts]
-        return sep.join([part for part in parts if part])
-
-    def get_lieu_naissance(data, key, village=False):
-        region = data.get('{}region'.format(key))
-        cercle = data.get('{}cercle'.format(key))
-        commune = data.get('{}commune'.format(key))
-        lieu_naissance = concat([commune, cercle, region], " / ")
-        return region, cercle, commune, lieu_naissance
-
-    def get_lieu(data, key):
-        region, cercle, commune, _ = get_lieu_naissance(data, key)
-        village = data.get('{}village'.format(key))
-        lieu = concat([village, commune, cercle, region], "/")
-        return region, cercle, commune, village, lieu
-
-    def get_other(data, key):
-        data_value = data.get(key)
-        data_value_other = data.get('{}_other'.format(key))
-        return data_value_other if data_value == 'other' else data_value
-
-    def get_int(data, key, default=0):
-        try:
-            return int(data.get(key, default))
-        except Exception as e:
-            logger.info(e)
-            return default
-
-    def get_date(data, key):
-        try:
-            return datetime.date(*[int(x) for x in data.get(key).split('-')])
-        except:
-            return None
-
-    def get_dob(data, key, female=False):
-        type_naissance = data.get('{}type-naissance'.format(key), 'ne-vers')
-        annee_naissance = get_int(data, '{}annee-naissance'.format(key), None)
-        ddn = get_date(data, '{}ddn'.format(key))
-        human = "Né{f} ".format(f="e" if female else "")
-        if type_naissance == 'ddn':
-            human += "le {}".format(ddn.strftime("%d-%m-%Y"))
-        else:
-            human += "vers {}".format(annee_naissance)
-
-        return type_naissance, annee_naissance, ddn, human
-
-    def get_bool(data, key, default='non'):
-        text = data.get(key, default)
-        return text == 'oui', text
-
-    def get_nom(data, p='', s=''):
-        nom = Instance.clean_lastname(
-            data.get('{p}nom{s}'.format(p=p, s=s)))
-        prenoms = Instance.clean_firstnames(data.get('{p}prenoms{s}'
-                                                     .format(p=p, s=s)))
-        name = Instance.clean_name(nom, prenoms)
-        return nom, prenoms, name
-
-    def get_blank_for_list_empty(data_list):
-        return BLANK if len(data_list) == 0 else data_list
 
     # lieu (pas sur papier)
     lieu_region, lieu_cercle, lieu_commune, lieu_village, lieu = get_lieu(
@@ -187,7 +123,6 @@ def gen_social_survey_pdf(target):
         qrsize = 100
         x = doc.width + doc.rightMargin - 40
         y = math.ceil(doc.height * 0.9)
-        print(y, x)
 
         canvas.saveState()
         canvas.drawImage(
@@ -217,19 +152,13 @@ def gen_social_survey_pdf(target):
             """<para align=left leftIndent={indent} spaceb=2 spaceafter=1> {label} {text}</para>""".format(
                 indent=indent, label=label, text=text), style)
 
-    def body_table(data):
-        table_data = Table(data)
-        table_data.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
-                                        ('ALIGN', (1, 1), (1, -1), 'LEFT')]))
-        return table_data
-
     doc = SimpleDocTemplate(pdf_form, pagesize=A4, leftMargin=35)
     logger.info("Headers")
-    headers = [["MINISTÈRE DE LA SOLIDARITÉ", "",  "    REPUBLIQUE DU MALI"],
-               ["DE L’ACTION HUMANITAIRE", "", "UN PEUPLE UN BUT UNE FOI"],
-               ["ET DE LA RECONSTRUCTION DU NORD", "", ""],
-               ["AGENCE NATIONALE D’ASSISTANCE MEDICALE (ANAM)", "", ""]]
-    headers_t = Table(headers, rowHeights=rowheights, colWidths=colwidths)
+    headers = [["MINISTÈRE DE LA SOLIDARITÉ", "", "",  "REPUBLIQUE DU MALI"],
+               ["DE L’ACTION HUMANITAIRE", "", "", "Un Peuple Un But Une Foi"],
+               ["ET DE LA RECONSTRUCTION DU NORD", "", "", ""],
+               ["AGENCE NATIONALE D’ASSISTANCE MEDICALE (ANAM)", "", "", ""]]
+    headers_t = Table(headers, rowHeights=12, colWidths=120)
     headers_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8), ]))
 
     story = []
@@ -318,13 +247,6 @@ def gen_social_survey_pdf(target):
                 nb=nb + 1, enfant=concat([name_enfant, naissance_enfant,
                                           "à {lieu}".format(lieu=lieu_naissance_enfant), "SC ?: {}".format(scolarise_text), "HD ?: {}".format(
                                               handicape_text), "AC ? : {}".format(acharge_text), "AP ? : {}".format(name_autre_parent)]))))
-
-            # story.append(draw_paragraph("", "{nb}. {enfant}".format(
-            #     nb=nb + 1, enfant=concat([name_enfant, naissance_enfant,
-            #                               "à {lieu}".format(lieu=lieu_naissance_enfant), ]))))
-            # story.append(draw_paragraph("", concat(["SC ?: {}".format(scolarise_text), "HD ?: {}".format(
-            # handicape_text), "AC ? : {}".format(acharge_text), "AP ? :
-            # {}".format(name_autre_parent)]), 10))
         nb_enfant = get_int(instance, 'nb_enfants')
         nb_enfant_handicap = get_int(instance, 'nb_enfants_handicapes')
         nb_enfant_acharge = get_int(instance, 'nb_enfant_acharge')
@@ -395,25 +317,17 @@ def gen_social_survey_pdf(target):
         draw_paragraph("Situation actuelle", concat(situation_actuelle)))
     story.append(draw_paragraph("Diagnostic", diagnostic))
     story.append(draw_paragraph("Diagnostic details", diagnostic_details))
-    # signature_dict = instance.get("signature")
-    # img = ""
-    # if signature_dict:
-    #     dir_media = os.path.join(output_folder, "signature_{}".format(
-    #         signature_dict.get("filename")))
-    #     img = Image(dir_media, width=80, height=82)
-
-    # signature = [["SIGNATURE DE L’ENQUÊTEUR", "",
-    #               "VISA DU CHEF DU SERVICE SOCIAL"], [img, ""]]
-    # signature_t = Table(signature, colWidths=150, rowHeights=90)
-    # signature_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8), ]))
-    # story.append(signature_t)
 
     sig_attachment = target.get_attachment('signature')
     signature = download_media(sig_attachment.get('download_url'))
-    signature_img = Image(signature, width=100, height=100)
-    story.append(signature_img)
-
-    # Fait le 01-06-2016 à cercle-de-mopti
+    signature_img = Image(signature, width=80, height=82)
+    signature = [["SIGNATURE DE L’ENQUÊTEUR", "", "",
+                  "VISA DU CHEF DU SERVICE SOCIAL"], [signature_img, ""]]
+    signature_t = Table(signature,  rowHeights=80, colWidths=110)
+    signature_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
+                                     ('TOPPADDING', (1, 1), (-1, -1), 20),
+                                     ('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
+    story.append(signature_t)
     # VISA DU CHEF DU SERVICE SOCIAL
     # SIGNATURE DE L’ENQUÊTEUR
     doc.build(story, onFirstPage=addQRCodeToFrame)
