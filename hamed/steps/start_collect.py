@@ -58,7 +58,8 @@ class UploadXLSForm(Task):
     def _revert(self):
         ''' remove form on ONA and remove form ID in Collect '''
         if self.kwargs.get('collect'):
-            delete_form(self.kwargs['collect'].ona_form_pk)
+            if self.kwargs['collect'].ona_form_pk:
+                delete_form(self.kwargs['collect'].ona_form_pk)
 
             self.kwargs['collect'].ona_form_pk = None
             self.kwargs['collect'].save()

@@ -23,7 +23,9 @@ class DisableONAForm(Task):
 
     def _revert(self):
         ''' re-enable form on ONA to allow new submissions '''
-        enable_form(self.kwargs['collect'].ona_form_pk)
+        if self.kwargs.get('collect'):
+            if self.kwargs['collect'].ona_form_pk:
+                enable_form(self.kwargs['collect'].ona_form_pk)
 
 
 class DownloadData(Task):
@@ -105,8 +107,9 @@ class UploadXLSForm(Task):
 
     def _revert(self):
         ''' remove form on ONA and remove form ID in Collect '''
-        if self.kwargs['collect']:
-            delete_form(self.kwargs['collect'].ona_scan_form_pk)
+        if self.kwargs.get('collect'):
+            if self.kwargs['collect'].ona_scan_form_pk:
+                delete_form(self.kwargs['collect'].ona_scan_form_pk)
 
             self.kwargs['collect'].ona_scan_form_pk = None
             self.kwargs['collect'].save()
@@ -125,7 +128,6 @@ class AddItemsetsToONAForm(Task):
 
     def _revert(self):
         ''' remove itemsets CSV from ONA medias '''
-        # TODO: find way to delete media without ID
         if 'uploaded_csv' in self.output:
             delete_media(self.kwargs['collect'],
                          self.output['uploaded_csv']['id'])

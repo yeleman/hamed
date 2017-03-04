@@ -70,6 +70,7 @@ def get(path, payload={}, headers={}, files={}, params={},
 
 def request(method, path, payload={}, headers={}, files={}, params={},
             expected_codes=(200, 201, 204), as_json=True,
+            timeout=60,
             silent_failure=False):
     url = get_url(path)
     methods = {'POST': requests.post, 'DELETE': requests.delete,
@@ -79,7 +80,7 @@ def request(method, path, payload={}, headers={}, files={}, params={},
     func = methods.get(method, requests.get)
     headers.update(get_auth_header())
     req = func(url=url, params=params, data=payload,
-               files=files, headers=headers)
+               files=files, headers=headers, timeout=timeout)
     # from pprint import pprint as pp ; pp(req.request.url)
     # from pprint import pprint as pp ; pp(req.request.headers)
     try:

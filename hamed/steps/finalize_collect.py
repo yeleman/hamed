@@ -20,7 +20,9 @@ class DisableONAScanForm(Task):
 
     def _revert(self):
         ''' re-enable form on ONA to allow new submissions '''
-        enable_form(self.kwargs['collect'].ona_scan_form_pk)
+        if self.kwargs.get('collect'):
+            if self.kwargs['collect'].ona_scan_form_pk:
+                enable_form(self.kwargs['collect'].ona_scan_form_pk)
 
 
 class DownloadScanData(Task):
@@ -49,6 +51,18 @@ class AddONAScanDataToCollect(Task):
         self.kwargs['collect'].reset_scan_form_data()
 
 
+class ExportAllData(Task):
+    required_inputs = ['collect']
+
+    def _process(self):
+        ''' export complete JSON data to file and medias '''
+        pass
+
+    def _revert(self):
+        ''' remove such files (JSON export and all medias) from disk '''
+        pass
+
+
 class MarkCollectAsFinalized(Task):
     required_inputs = ['collect']
 
@@ -64,4 +78,5 @@ class MarkCollectAsFinalized(Task):
 class FinalizeCollectTaskCollection(TaskCollection):
     tasks = [DisableONAScanForm,
              DownloadScanData,
+             ExportAllData,
              MarkCollectAsFinalized]
