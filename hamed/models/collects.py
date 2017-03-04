@@ -13,9 +13,11 @@ from django.utils import timezone
 
 from hamed.utils import gen_targets_csv
 from hamed.models.targets import Target
+from hamed.models.settings import Settings
 from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
+from hamed.locations import get_cercle_name, get_commune_name
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +53,14 @@ class Collect(models.Model):
     ENDED = ENDED
     FINALIZED = FINALIZED
 
+    MAYOR_TITLES = OrderedDict([
+        ('sir', "M."),
+        ('madam', "Mme"),
+        ('doctor', "Dr"),
+    ])
+
     class Meta:
-        unique_together = [('commune', 'suffix')]
+        unique_together = [('commune_id', 'suffix')]
 
     status = models.CharField(max_length=50, choices=STATUSES().items(),
                               default=STARTED)
@@ -61,8 +69,11 @@ class Collect(models.Model):
     ended_on = models.DateTimeField(blank=True, null=True)
     finalized_on = models.DateTimeField(blank=True, null=True)
 
-    commune = models.CharField(max_length=100)
+    cercle_id = models.CharField(max_length=100, default=Settings.cercle_id)
+    commune_id = models.CharField(max_length=100, choices=[])
     suffix = models.CharField(max_length=50)
+    mayor_title = models.CharField(max_length=50, choices=MAYOR_TITLES.items())
+    mayor_name = models.CharField(max_length=100)
 
     ona_form_pk = models.IntegerField(blank=True, null=True)
     ona_scan_form_pk = models.IntegerField(blank=True, null=True)
@@ -82,6 +93,19 @@ class Collect(models.Model):
     def name(self):
         return "E.S {commune} {suffix}".format(
             commune=self.commune, suffix=self.suffix)
+
+    @property
+    def cercle(self):
+        return get_cercle_name(self.cercle_id)
+
+    @property
+    def commune(self):
+        return get_commune_name(self.cercle_id, self.commune_id)
+
+    @property
+    def mayor(self):
+        return "{title} {name}".format(title=self.verbose_mayor_title,
+                                       name=self.mayor_name)
 
     def form_title(self):
         return "Enquête sociale {commune}/{suffix}".format(
@@ -119,6 +143,10 @@ class Collect(models.Model):
     @property
     def verbose_status(self):
         return STATUSES().get(self.status)
+
+    @property
+    def verbose_mayor_title(self):
+        return self.MAYOR_TITLES.get(self.mayor_title)
 
     def has_ended(self):
         return self.status in (self.ENDED, self.FINALIZED)

@@ -12,12 +12,14 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django import forms
 
-from hamed.models.collects import Collect, Target
+from hamed.models.collects import Collect
+from hamed.models.targets import Target
+from hamed.models.settings import Settings
 from hamed.ona import get_form_detail, download_media
 from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
-
+from hamed.locations import get_communes
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,14 @@ class NewCollectForm(forms.ModelForm):
 
     class Meta:
         model = Collect
-        fields = ['commune', 'suffix']
+        fields = ['commune_id', 'suffix', 'mayor_title', 'mayor_name']
+
+    def __init__(self, *args, **kwargs):
+        super(NewCollectForm, self).__init__(*args, **kwargs)
+
+        cercle_id = Settings.cercle_id()
+        self.fields['commune_id'] = forms.ChoiceField(
+            choices=get_communes(cercle_id))
 
 
 def home(request):

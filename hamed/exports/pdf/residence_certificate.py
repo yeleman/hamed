@@ -69,8 +69,8 @@ def gen_residence_certificate_pdf(target):
     situation_matrioniale = instance.get(
         'enquete/situation-matrimoniale', BLANK)
     profession = get_other(instance, 'enquete/profession')
-    cercle = target.cercle
-    commune = target.commune
+    cercle = target.collect.cercle
+    commune = target.collect.commune
 
     headers = [["MINISTERE DE L'ADMINISTRATION", "", "",  "    REPUBLIQUE DU MALI"],
                ["TERRITORIALE DE LA DECENTRALISATION",
@@ -87,7 +87,9 @@ def gen_residence_certificate_pdf(target):
     story = []
     story.append(headers_table)
     story.append(draw_paragraph_title("CERTIFICAT D'IDENTITE ET DE RESIDENCE"))
-    story.append(draw_paragraph("Nous :  Mairie de {}".format(commune)))
+    story.append(draw_paragraph(
+        "Nous : {maire}, maire de la commune de {commune}"
+        .format(maire=target.collect.mayor, commune=commune)))
     story.append(draw_paragraph(
         " Certifions que {} : {}".format("Mme" if is_female else "M", name)))
     story.append(

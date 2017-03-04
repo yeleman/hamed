@@ -14,6 +14,7 @@ class Settings(models.Model):
     ONA_SERVER = 'ona-server'
     ONA_USERNAME = 'ona-username'
     ONA_TOKEN = 'ona-token'
+    CERCLE_ID = 'cercle-id'
 
     key = models.SlugField(primary_key=True)
     value = models.CharField(max_length=500)
@@ -46,3 +47,7 @@ class Settings(models.Model):
     @classmethod
     def ona_token(cls):
         return cls.get_value_or_none(cls.ONA_TOKEN)
+
+    @classmethod
+    def cercle_id(cls):
+        return cls.get_value_or_none(cls.CERCLE_ID)
