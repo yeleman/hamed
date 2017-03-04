@@ -104,11 +104,11 @@ def gen_targets_documents(targets):
             with open(document_fpath, 'wb') as f:
                 f.write(document.read())
 
-        # survey is also symlinked in prints
+        # survey is also copied (not synlinked --printer issue--) in prints
         survey_link_fpath = os.path.join(survey_links_folder, survey_fname)
         # remove first as symlink can't be forced
-        P(survey_link_fpath).unlink_p()
-        P(survey_fpath).symlink(survey_link_fpath)
+        # P(survey_link_fpath).unlink_p()
+        P(survey_fpath).copy2(survey_link_fpath)
 
 
 def get_attachment(dataset, question_value, main_key='_attachments'):
