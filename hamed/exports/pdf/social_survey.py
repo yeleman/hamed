@@ -15,8 +15,10 @@ from reportlab.platypus import (Paragraph, Table, TableStyle, Image,
                                 SimpleDocTemplate)
 
 from hamed.ona import download_media
-from hamed.exports.common import (concat, get_lieu_naissance, get_lieu, get_other,
-                                  get_int, get_date, get_dob, get_bool, get_nom)
+from hamed.exports.common import (
+    concat, get_lieu_naissance, get_lieu, get_other,
+    get_int, get_dob, get_bool, get_nom)
+from hamed.form_labels import get_label_for
 
 BLANK = "néant"
 logger = logging.getLogger(__name__)
@@ -171,8 +173,10 @@ def gen_social_survey_pdf(target):
         [('BOX', (0, 0), (-1, -1), 0.30, colors.black), ]))
     story.append(numero_enquete_t)
     story.append(draw_paragraph("Identifiant enquêteur", numero_enquete))
-    story.append(draw_paragraph("Objet de l’enquête", objet_enquete))
-    story.append(draw_paragraph("Enquête demandée par", demandeur))
+    story.append(draw_paragraph(
+        "Objet de l’enquête", get_label_for('objet', objet_enquete)))
+    story.append(draw_paragraph(
+        "Enquête demandée par", get_label_for('demandeur', demandeur)))
     story.append(draw_paragraph_sub_title_h2("Enquêté"))
     logger.info("Enquêté")
     story.append(
