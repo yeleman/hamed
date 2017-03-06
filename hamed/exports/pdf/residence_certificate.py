@@ -17,6 +17,7 @@ from django.template.defaultfilters import date as date_filter
 
 from hamed.exports.common import (get_lieu_naissance, get_lieu, get_other,
                                   get_date, get_dob, get_nom)
+from hamed.form_labels import get_label_for
 
 BLANK = "néant"
 logger = logging.getLogger(__name__)
@@ -47,8 +48,9 @@ def gen_residence_certificate_pdf(target):
             <b><font size=12>{}</font></b></para>""".format(text), n_style)
 
     def draw_paragraph(data, indent=30, align="left"):
-        return Paragraph("""<para align={align} leftIndent={indent} spaceb=2 spaceafter=1>{data}</para>""".format(
-            align=align, indent=indent, data=data), n_style)
+        return Paragraph("""<para align={align} leftIndent={indent}
+                         spaceb=2 spaceafter=1>{data}</para>"""
+                         .format(align=align, indent=indent, data=data), n_style)
 
     doc = SimpleDocTemplate(pdf_form, pagesize=A4)
 
@@ -56,8 +58,8 @@ def gen_residence_certificate_pdf(target):
     sexe = instance.get('enquete/sexe')
     is_female = sexe == 'feminin'
 
-    type_naissance, annee_naissance, ddn, naissance = get_dob(
-        instance, 'enquete/', is_female)
+    type_naissance, annee_naissance, ddn, naissance, \
+        date_or_year = get_dob(instance, 'enquete/', is_female)
     region_naissance, cercle_naissance, commune_naissance, \
         lieu_naissance = get_lieu_naissance(instance, 'enquete/')
 
@@ -72,7 +74,7 @@ def gen_residence_certificate_pdf(target):
     cercle = target.collect.cercle
     commune = target.collect.commune
 
-    headers = [["MINISTERE DE L'ADMINISTRATION", "", "",  "    REPUBLIQUE DU MALI"],
+    headers = [["MINISTERE DE L'ADMINISTRATION", "", "",  "REPUBLIQUE DU MALI"],
                ["TERRITORIALE DE LA DECENTRALISATION",
                    "", "", "Un Peuple Un But Une Foi"],
                ["ET DE LA REFORME DE L'ETAT", "", "", "**" * 10],
@@ -84,31 +86,49 @@ def gen_residence_certificate_pdf(target):
     headers_table.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
                                        ('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
 
+    type_piece = instance.get('type-piece')
+    if type_piece == "acte-naissance":
+        num_piece_and_centre = \
+            "Acte de naissance n° {} délivrée à {}.".format(
+            instance.get('acte-naissance/numero_acte_naissance'),
+            instance.get('acte-naissance/centre_acte_naissance'))
+    elif type_piece == "piece-didentite":
+        num_piece_and_centre = \
+        "Carte d'identité nationale n° {} délivrée à {}.".format(
+            instance.get('carte_identite/numero_carte_identite'),
+            instance.get('carte_identite/centre_carte_identite'))
+    else:
+        num_piece_and_centre = "Carte NINA n° {}".format(
+            instance.get('nina', BLANK))
+
     story = []
     story.append(headers_table)
     story.append(draw_paragraph_title("CERTIFICAT D'IDENTITE ET DE RESIDENCE"))
     story.append(draw_paragraph(
-        "Nous : {maire}, maire de la commune de {commune}"
+        "Nous, {maire}, maire de la commune de {commune}"
         .format(maire=target.collect.mayor, commune=commune)))
     story.append(draw_paragraph(
-        " Certifions que {} : {}".format("Mme" if is_female else "M", name)))
+        " Certifions que {} {}".format("Mme" if is_female else "M.", name)))
     story.append(
-        draw_paragraph("{} à {}".format(naissance, lieu_naissance)))
-    story.append(draw_paragraph("{sexe} de  {name_pere}  et de {name_mere} ".format(
-        sexe="Fille " if is_female else "Fils", name_pere=name_pere, name_mere=name_mere)))
+        draw_paragraph("{} à {}".format(naissance.title(), lieu_naissance)))
+    story.append(draw_paragraph(
+        "{sexe} de {name_pere}  et de {name_mere}".format(sexe="Fille "
+        if is_female else "Fils", name_pere=name_pere, name_mere=name_mere)))
     story.append(
-        draw_paragraph("Exerçant la Profession :  {}".format(profession)))
+        draw_paragraph("Exerçant la Profession : {}".format(
+            get_label_for('profession', profession))))
     story.append(draw_paragraph(
-        "Est domicilié (e) à  {}".format(instance.get('enquete/adresse', BLANK))))
+        "Est domicilié{} à : {}".format("e" if is_female else "",
+                                       instance.get('enquete/adresse', BLANK))))
     story.append(
-        draw_paragraph("Depuis plus de trois (3) mois ainsi qu'il résulte de"))
-    story.append(draw_paragraph(
-        "{} {} {} {}".format("N°", "." * 15, "délivrée le", "..." * 30)))
-    story.append(draw_paragraph(
-        "En foi de quoi, nous lui avons délivré le présent certificat pour servir et valoir ce que de droit."))
-    story.append(draw_paragraph("Pour constitution du dossier"))
-    story.append(draw_paragraph(
-        "<b>Bamako, le</b> {}".format(date_filter(timezone.now())), align="right"))
+        draw_paragraph("Depuis plus de trois (3) mois ainsi qu'il résulte de la piéce :"))
+    story.append(draw_paragraph(num_piece_and_centre))
+    story.append(draw_paragraph("En foi de quoi, nous lui avons délivré le "
+        "présent certificat pour servir et faire valoir ce que de droit."))
+    story.append(draw_paragraph("Pour constitution du dossier."))
+    story.append(
+        draw_paragraph("<b>Bamako, le</b> {}".format(
+            date_filter(timezone.now())), align="right"))
     story.append(draw_paragraph("<b>P/</b> le Maire <b>PO</b>", align="right"))
 
     doc.build(story, onFirstPage=addQRCodeToFrame)
