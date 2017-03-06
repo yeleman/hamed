@@ -8,26 +8,30 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}" />
 		<style type="text/css">
-			body { padding-top: 50px; }
+			body { padding-top: 60px; }
+			img.logo { height: 50px; padding:5px; }
+			.setting { font-weight: bold; font-family: monospace; }
+			.floating { float: right; }
+			.dl-horizontal dt { text-align: left; }
 		</style>
 	</head>
     <body>
-	    <nav class="navbar navbar-inverse navbar-fixed-top">
+	    <nav class="navbar navbar-default navbar-fixed-top">
 	      <div class="container">
 	        <div class="navbar-header">
 	          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-	            <span class="sr-only">Toggle navigation</span>
+	            <span class="sr-only">navigation</span>
 	            <span class="icon-bar"></span>
 	            <span class="icon-bar"></span>
 	            <span class="icon-bar"></span>
 	          </button>
-	          <a class="navbar-brand" href="{% url 'home' %}">hamed</a>
+	          <a href="{% url 'home' %}"><img src="{% static "icons/ramed-logo.png" %}" class="logo" /></a>
 	        </div>
 	        <div id="navbar" class="collapse navbar-collapse">
 	          <ul class="nav navbar-nav">
-	            <li class="active"><a>{% block title %}SLDSES{% endblock %}</a></li>
-	            <!-- <li><a href="#about">About</a></li>
-	            <li><a href="#contact">Contact</a></li> -->
+	            <li class="active"><a href="{% block title_link %}{% endblock %}">{% block title %}SLDSES{% endblock %}</a></li>
+	            <li><a href="{% url 'help' %}">Aide</a></li>
+	            <li><a href="#contact">Contact</a></li>
 	          </ul>
 	        </div><!--/.nav-collapse -->
 	      </div>
@@ -45,18 +49,8 @@
 	        </div>
             {% endif %}
 			<div class="row">
-				{% block content %}{% endblock %}
+				{% block maincontent %}{% endblock %}
 			</div>
-			{% if not messages %}
-			{% if success != None or feedback != None %}
-			<div class="row">
-			<hr />
-			<div class="alert alert-{% if success %}success{% else %}warning{% endif %}">
-			<p><strong>{% if success %}SUCCESS{% else %}FAILURE{% endif %}</strong>: {{ feedback }}</p>
-			</div>
-			</div>
-			{% endif %}
-			{% endif %}
 		</div>
 	</body>
 	<script src="{% static "js/jquery-3.1.1.min.js" %}"></script>

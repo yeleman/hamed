@@ -1,38 +1,190 @@
-{% extends "base.html" %}
+{% extends "dual.html" %}
+{% load static %}
 
-{% block title %}{{ collect.name }}{% endblock %}
+{% block title %}{{ collect.form_title }}{% endblock %}
+{% block title_link %}{% url 'collect' collect.id %}{% endblock %}
 
 {% block content %}
-<h2>État de la collecte</h2>
-<p><em>Statut:</em> {{ collect.verbose_status }}</p>
-<p><em>Démarré le:</em> {{ collect.started_on }}</p>
+<a class="floating" href="{% url 'collect_data' collect.id %}"><button class="btn btn-default"><img style="width: 1.5em;" src="{% static "icons/archive.svg" %}" %}"> Voir les cibles</button></a>
+
+<dl class="dl-horizontal">
+<dt>Statut:</dt>
+<dd>{{ collect.verbose_status }}</dd>
+
+<dt>Démarré le:</dt>
+<dd>{{ collect.started_on }}</dd>
+
 {% if collect.has_ended %}
-<p><em>Terminée le:</em> {{ collect.ended_on }}</p>
+<dt>Terminée le:</dt>
+<dd>{{ collect.ended_on }}</dd>
+
 {% endif %}
 {% if collect.has_finalized %}
-<p><em>Finalisée le:</em> {{ collect.finalized_on }}</p>
-{% endif %}
-<p><em>Commune:</em> {{ collect.commune }}</p>
-<p><em>Suffixe:</em> {{ collect.suffix }}</p>
-{% if collect.has_ended %}
-<p><em>Nb de soumissions:</em> {{ collect.nb_submissions|default_if_none:"n/a" }}</p>
-<p><em>Nb d'indigents:</em> {{ collect.nb_indigents|default_if_none:"n/a" }}</p>
-<p><em>Nb de médias:</em> {{ collect.nb_medias|default_if_none:"n/a" }}</p>
-<p><em>Poids des médias:</em> {{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}</p>
-{% else %}
-<p><em>Nb de soumissions ONA:</em> {{ ona_collect.num_of_submissions|default_if_none:"n/a" }}</p>
-{% endif %}
+<dt>Finalisée le:</dt>
+<dd>{{ collect.finalized_on }}</dd>
 
-<a href="{% url 'collect_data' collect.id %}"><button class="btn btn-default">Voir les cibles</button></a>
+{% endif %}
+<dt>Commune</dt>
+<dd>{{ collect.commune }}, cercle de {{ collect.cercle }}<br />
+	{{ collect.mayor }}</dd>
+
+<dt>Suffixe:</dt>
+<dd>{{ collect.suffix }}</dd>
+
+<dt>Nb de soumissions:</dt>
+<dd>{{ collect.nb_submissions|default_if_none:"n/a" }}</dd>
+
+<dt>Nb d'indigents:</dt>
+<dd>{{ collect.nb_indigents|default_if_none:"n/a" }}</dd>
+
+<dt>Nb de refus:</dt>
+<dd>{{ collect.nb_non_indigents|default_if_none:"n/a" }}</dd>
+
+<dt>Nb de médias:</dt>
+<dd>{{ collect.nb_medias|default_if_none:"n/a" }}</dd>
+
+<dt>Poids des médias:</dt>
+<dd>{{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}</dd>
+
+<dt>Nb soum. ONA:</dt>
+<dd>{{ ona_form.num_of_submissions|default:"n/a" }}</dd>
+<dt>Nb soum. scan ONA:</dt>
+<dd>{{ ona_scan_form.num_of_submissions|default:"n/a" }}</dd>
+
+<dt>Changement statut</dt>
+<dd><button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#status-change-modal"><span class="glyphicon glyphicon-alert"></span> modifier la collecte</button></dd>
+</dl>
+<div id="status-change-modal" class="modal fade" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-sm" role="document">
+		<div class="modal-content">
+			<div class="modal-header alert-danger">
+		      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+		      <h4 class="modal-title">Modification de la collecte</h4>
+		      </div>
+		      <div class="modal-body alert-danger">
+		      	<p class=""><strong><span class="glyphicon glyphicon-alert"></span> Attention !</strong> Opération <strong>irréversible</strong>.</p>
+		      	<p>Dans le cas où vous auriez <em>cloturé</em> ou <em>finalisé</em> une collecte par erreur, cette option vous permet de revenir en arrière.</p>
+		      	<p>Toutes les données issues de l'étape suivante seront définitivement effacée.</p>
+		      	<p>À n'utiliser que si vous savez ce que vous faites.</p>
+
+		      	<h4>Retourner au statut:</h4>
+		      	<button id="downgrade-btn" class="btn btn-danger">{{ collect.previous_verbose_status }}</button>
+			  </div>
+		</div>
+    </div>
+</div>
 
 <hr />
 {% if collect.get_next_step %}
 <h2>Prochaine étape</h2>
-<form action="{{ collect.get_next_step.url }}" method="POST">
-{% csrf_token %}
-<input type="submit" class="btn btn-default btn-primary" value="{{ collect.get_next_step.label }}"></button></form>
-{% else %}
-<h2>Exporter les données</h2>
-<p>…</p>
+<button type="button" class="btn btn-default action-trigger"><img style="width: 1.5em;" src="{% static "icons/" %}{{ collect.get_next_step.icon }}.svg" %}"> {{ collect.get_next_step.label }}</button>
 {% endif %}
+
+<div id="action-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+      <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button> -->
+      <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+      	<p>Opération en cours… Veuillez patienter.</p>
+      	<div class="progress">
+		  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+		    <span class="sr-only">Veuillez patienter</span>
+		  </div>
+		</div>
+		</div>
+    </div>
+  </div>
+</div>
+
+{% if collect.has_ended %}
+<h2>Impression des documents</h2>
+<p><button id="open-folder" class="btn btn-default"><span class="glyphicon glyphicon-print"></span> Voir les PDF à imprimer</button></p>
+<p class="setting">{{ collect.get_documents_path }}</p>
+{% endif %}
+
+{% if collect.has_finalized %}
+<h2>Export des données</h2>
+<p><a href="ds"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Télécharger l'export Excel</button></a></p>
+<h3>Données brutes ANAM</h3>
+<p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="ds"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
+<h3>Fichiers médias</h3>
+<p><button id="export-usb" class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé</button></p>
+{% endif %}
+
+{% endblock %}
+
+{% block help %}
+{% if collect.started %}
+{% include "help_started.html" %}
+{% elif collect.ended %}
+{% include "help_ended.html" %}
+{% elif collect.finalized %}
+{% include "help_finalized.html" %}
+{% endif %}
+{% endblock %}
+
+{% block onJQready %}
+$('#open-folder').on('click', function (e) {
+	var button = $(this);
+	button.attr("disabled", "disabled");
+	$.get("{% url 'collect_folder' collect.id %}", function () {
+
+	})
+	.always(function () {
+		button.removeAttr("disabled");
+	});
+});
+
+function postWithLoading(url, title, reload, callback) {
+	// CSRF Token for django
+	var postdata={'csrfmiddlewaretoken': '{{ csrf_token }}'};
+
+	// display loading dialog
+	$('#action-modal .modal-title').text(title);
+	$('#action-modal').modal({backdrop: "static", "keybord": false, show: true});
+
+	// submit action
+	$.post(url, postdata, function (data) {
+	}).done(function(data) {
+		try { success(data); } catch (e) {}
+  	})
+  	.fail(function() {
+  		try { fail(error); } catch (e) {}
+  	})
+	.always(function() {
+    	// remove modal dialog
+		$('#action-modal').modal('hide');
+
+		// callback
+		try { callback(); } catch (e) { console.error(e); }
+		
+		// refresh page to display new info + message
+		if (reload) {
+			location.reload();
+		}
+  	});
+}
+
+$('button.action-trigger').on('click', function(e) {
+	postWithLoading(
+		"{{ collect.get_next_step.url }}",
+		"{{ collect.get_next_step.label }}",
+		true);
+});
+
+$('#downgrade-btn').on('click', function(e) {
+	postWithLoading(
+		"{% url 'collect_downgrade' collect.id %}",
+		"Vers… {{ collect.previous_verbose_status }}",
+		false, function () {
+			alert("myways");
+			{% if not collect.has_ended %}window.location.replace("{% url 'home' %}");{% endif %}
+		});
+});
+
+
+
 {% endblock %}

@@ -12,6 +12,8 @@ from hamed.admin import admin_site
 urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^collect/(?P<collect_id>[0-9]+)/?$', views.collect, name='collect'),
+    url(r'^collect/(?P<collect_id>[0-9]+)/open-folder/?$',
+        views.open_documents_folder, name='collect_folder'),
     url(r'^collect/(?P<collect_id>[0-9]+)/targets/?$',
         views.collect_data, name='collect_data'),
     url(r'^start/?$', views.start_collect, name='start_collect'),
@@ -21,6 +23,10 @@ urlpatterns = [
         name='finalize_collect'),
     url(r'attachment/(?P<fname>[a-zA-Z0-9\-\_\.]+)', views.attachment_proxy,
         name='attachment'),
+    url(r'^collect/(?P<collect_id>[0-9]+)/downgrade/?$',
+        views.collect_downgrade, name='collect_downgrade'),
+
+    url(r'^help/?$', views.help, name='help'),
 
     url(r'^admin/', admin_site.urls),
 ]

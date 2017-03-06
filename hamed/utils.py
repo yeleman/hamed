@@ -6,6 +6,8 @@ import logging
 import io
 import csv
 import os
+import platform
+import subprocess
 
 from path import Path as P
 from django.db.models import QuerySet
@@ -118,3 +120,12 @@ def get_attachment(dataset, question_value, main_key='_attachments'):
             if attachment.get('filename', "").endswith(question_value):
                 return attachment
     return None
+
+
+def open_finder_at(abs_path):
+    if platform.system() == "Windows":
+        os.startfile(abs_path)
+    elif platform.system() == "Darwin":
+        subprocess.Popen(["open", abs_path])
+    else:
+        subprocess.Popen(["xdg-open", abs_path])

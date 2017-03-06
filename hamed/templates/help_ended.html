@@ -1,0 +1,25 @@
+<h2>Collecte terminée…</h2>
+<p>Vous avez cloturée votre collecte «{{ collect.name }}» sur le système. Vous devez maintenant :</p>
+<ol>
+<li>Imprimer tous les documents, les analyser et les envoyer à la mairie</li>
+<li>Configurer une tablette pour scanner les certificats signés</li>
+<li>Décharger cette tablette dans le système</li>
+</ol>
+
+<h3>Impression des documents</h3>
+<p>Pour chaque cible, trois documents sont produits par le système :</p>
+<ol>
+<li>L'enquête sociale remplie (version condensée)</li>
+<li>Un certificat de résidence non signé</li>
+<li>Un certificat d'indigence non signé</li>
+</ol>
+<p>Cela représente trois feuilles par cible. Choisissez <em>Voir les documents</em> sur la page de la collecte et copiez les trois dossiers sur une clé USB.</p>
+<p>Préparez un nombre de feuilles suffisant ({{ collect.get_nb_papers|default:"aucun" }} pour cette collete) et suivez les instructions pour l'impression USB sur l'imprimante.</p>
+
+<h3>Configuration de la tablette pour les scan</h3>
+<p>La récupération des scans des certificats (résidence, indigence) se fait à travers une <em>mini-collecte</em>. Il faut donc configurer ODK Collect sur une tablette pour cette collecte «<strong>{{ collect.scan_form_title }}</strong>» avec l'ID <span class="setting">{{ collect.ona_scan_form_id }}</span>.</p>
+
+<h3>Déchargement de la tablette</h3>
+<p>Comme pour la collecte normale, il faut activer le WiFi, sélectionner tous les questionnaires finalisés et les envoyer.</p>
+<p>Une fois ce travail effectué, vérifier que le <em>Nombre de soumissions pour scan ONA</em> correspond au nombre d'indigents.</p>
+<p>Vous pouvez alors la finaliser. N'oubliez pas de ranger la tablette.</p>

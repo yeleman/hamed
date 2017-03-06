@@ -5,6 +5,7 @@
 import os
 import logging
 from collections import OrderedDict
+from statistics import median, StatisticsError
 
 from django.db import models
 from django.urls import reverse
@@ -70,10 +71,14 @@ class Collect(models.Model):
     finalized_on = models.DateTimeField(blank=True, null=True)
 
     cercle_id = models.CharField(max_length=100, default=Settings.cercle_id)
-    commune_id = models.CharField(max_length=100, choices=[])
-    suffix = models.CharField(max_length=50)
-    mayor_title = models.CharField(max_length=50, choices=MAYOR_TITLES.items())
-    mayor_name = models.CharField(max_length=100)
+    commune_id = models.CharField(max_length=100, choices=[],
+                                  verbose_name="Commune")
+    suffix = models.CharField(max_length=50, verbose_name="Suffixe")
+    mayor_title = models.CharField(max_length=50,
+                                   choices=MAYOR_TITLES.items(),
+                                   verbose_name="Titre")
+    mayor_name = models.CharField(max_length=100,
+                                  verbose_name="Nom du maire")
 
     ona_form_pk = models.IntegerField(blank=True, null=True)
     ona_scan_form_pk = models.IntegerField(blank=True, null=True)
@@ -145,8 +150,28 @@ class Collect(models.Model):
         return STATUSES().get(self.status)
 
     @property
+    def previous_verbose_status(self):
+        try:
+            assert self.sm_index > 0
+            return self.machine_value_for(self.sm_index - 1)[0]
+        except:
+            return "Supprimer la collecte"
+
+    @property
     def verbose_mayor_title(self):
         return self.MAYOR_TITLES.get(self.mayor_title)
+
+    @property
+    def started(self):
+        return self.status == self.STARTED
+
+    @property
+    def ended(self):
+        return self.status == self.ENDED
+
+    @property
+    def finalized(self):
+        return self.status == self.FINALIZED
 
     def has_ended(self):
         return self.status in (self.ENDED, self.FINALIZED)
@@ -184,6 +209,7 @@ class Collect(models.Model):
         return tc
 
     def downgrade(self):
+        print("**********", "DOWNGRADE", "********", "SM-INDEX", self.sm_index)
         # can't downgrade if at first step. Delete instead
         if self.sm_index < 0:
             return
@@ -222,17 +248,19 @@ class Collect(models.Model):
             url = reverse('end_collect',
                           kwargs={'collect_id': self.id})
             label = "Cloturer la collecte"
+            icon = 'end'
         elif self.status == self.ENDED:
             url = reverse('finalize_collect',
                           kwargs={'collect_id': self.id})
             label = "Finaliser la collecte"
+            icon = 'finalize'
         else:
             return None
         # elif self.status == self.FINALIZED:
         #     url = reverse('export',
         #                   kwargs={'collect_id': self.id})
         #     label = "Exporter les données de la collecte"
-        return {'url': url, 'label': label}
+        return {'url': url, 'label': label, 'icon': icon}
 
     def change_status(self, new_status):
         assert new_status in STATUSES().keys()
@@ -255,12 +283,15 @@ class Collect(models.Model):
         nb_medias = 0
         medias_size = 0
         for submission in data:
-            # create Target
-            Target.create_from_submission(self, submission)
+            # get attachement filesizes
             attachments = submission.get('_attachments', [])
             for media in attachments:
                 media['filesize'] = get_media_size(
                     media.get('filename', ''))
+            submission['_attachments'] = attachments
+
+            # create Target
+            Target.create_from_submission(self, submission)
 
             nb_medias += len(attachments)
             medias_size += sum([m['filesize'] for m in attachments])
@@ -333,3 +364,18 @@ class Collect(models.Model):
     def get_documents_path(self):
         return os.path.join(settings.COLLECT_DOCUMENTS_FOLDER,
                             self.ona_form_id())
+
+    def get_nb_men(self):
+        return self.targets.filter(gender=Target.MALE).count()
+
+    def get_nb_women(self):
+        return self.targets.filter(gender=Target.FEMALE).count()
+
+    def get_median_age(self):
+        try:
+            return median([t['age'] for t in self.targets.values('age')])
+        except StatisticsError:
+            return None
+
+    def get_nb_papers(self):
+        return self.nb_submissions * 3 if self.nb_submissions else None

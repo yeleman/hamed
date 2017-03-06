@@ -48,6 +48,10 @@ class BaseTask(object):
         return self.status == self.SUCCESS
 
     @property
+    def reverted(self):
+        return self.status == self.REVERTED
+
+    @property
     def clean_state(self):
         return self.status in self.CLEAN_STATUSES
 
@@ -127,11 +131,10 @@ class TaskFailed(Exception):
 
 class TaskCollection(BaseTask):
     tasks = []
-    instances = []
-    inputs = {}
 
     def __init__(self, **kwargs):
         super(TaskCollection, self).__init__(**kwargs)
+        self.instances = []
         self.inputs = kwargs
 
     def process(self):

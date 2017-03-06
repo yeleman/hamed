@@ -1,0 +1,31 @@
+<h2>Collecte en cours…</h2>
+<p>Vous avez créé votre collecte «{{ collect.name }}» sur le système. Vous devez maintenant :</p>
+<ol>
+<li>Préparer les tablettes (recharger, configurer)</li>
+<li>Former les enquêteurs</li>
+<li>Envoyer les enquêteurs sur le terrain pour la collecte</li>
+<li>Décharger les tablettes dans le système</li>
+</ol>
+
+<h3>Préparation des tablettes</h3>
+<p>En fonction de la commune ({{ collect.commune }}) et du nombre de cibles prévues, vous devez estimer un nombre de tablette nécessaire. Pour chaque tablette :</p>
+<ol>
+<li>Recharger la tablette à 100%</li>
+<li>Vérifier la configuration de la tablette (cf. guide)</li>
+<li>Nettoyer ODK Collect (supprimer tous les questionnaires)</li>
+<li>Installer le nouveau questionnaire, nommé «<strong>{{ collect.form_title }}</strong>» et portant l'ID <span class="setting">{{ collect.ona_form_id }}</span>.</li>
+</ol>
+
+<h3>Formation des enquêteurs et démarrage de la collecte</h3>
+<p>Suivre le guide pour former les enquêteurs et les envoyer sur le terrain</p>
+
+<h3>Déchargement des tabelles</h3>
+<p>Au retour des enquêteurs, déchargez <strong>chaque</strong> tablette avec l'enquêteur en vérfiant :</p>
+<ol>
+<li>Activer le WiFi pour se connecter au système</li>
+<li>Dans <em>ODK Collect</em>, choisir <em>Envoyer un formulaire Finalisé</em>.</li>
+<li>Vérifier avec l'enquêteur que le nombre de formulaire finalisés corresponde à son travail.</li>
+<li>Cocher <em>(dé)sélectionner tout</em> et enfin <em>Envoyer Éléments Sélectionnés</em>.</li>
+</ol>
+<p>Une fois ce travail effectué sur toutes les tablettes, vérifier que le <em>Nb de soumissions ONA</em> de la collecte sur le système soit correcte.</p>
+<p>Vous pouvez alors la cloturer. N'oubliez pas de ranger les tablettes.</p>

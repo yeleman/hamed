@@ -6,7 +6,7 @@ import logging
 import re
 import os
 
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 from django.contrib import messages
@@ -20,6 +20,7 @@ from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 from hamed.locations import get_communes
+from hamed.utils import open_finder_at
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,10 @@ def collect(request, collect_id):
         raise Http404("No collect with ID `{}`".format(collect_id))
     context = {
         'collect': collect,
-        'ona_collect': get_form_detail(collect.ona_form_pk)}
+        'ona_form': get_form_detail(collect.ona_form_pk)
+        if collect.ona_form_pk else {},
+        'ona_scan_form': get_form_detail(collect.ona_scan_form_pk)
+        if collect.ona_scan_form_pk else {}}
 
     return render(request, 'collect.html', context)
 
@@ -107,14 +111,16 @@ def end_collect(request, collect_id):
 
     def fail(message):
         messages.error(request, message)
-        return redirect('collect', collect_id=collect.id)
+        # return redirect('collect', collect_id=collect.id)
+        return JsonResponse({'status': 'error', 'message': message})
 
     tc = EndCollectTaskCollection(collect=collect)
     tc.process()
     if tc.successful:
-        messages.success(request, "Successfuly ended Collect “{}”"
-                                  .format(collect))
-        return redirect('collect', collect.id)
+        message = "Successfuly ended Collect “{}”".format(collect)
+        messages.success(request, message)
+        return JsonResponse({'status': 'success', 'message': message})
+        # return redirect('collect', collect.id)
     elif not tc.clean_state:
         return fail("Unable to end collect. "
                     "Error while reverting to previous state: {}"
@@ -133,14 +139,16 @@ def finalize_collect(request, collect_id):
 
     def fail(message):
         messages.error(request, message)
-        return redirect('collect', collect_id=collect.id)
+        # return redirect('collect', collect_id=collect.id)
+        return JsonResponse({'status': 'error', 'message': message})
 
     tc = FinalizeCollectTaskCollection(collect=collect)
     tc.process()
     if tc.successful:
-        messages.success(request, "Successfuly finalized Collect “{}”"
-                                  .format(collect))
-        return redirect('collect', collect.id)
+        message = "Successfuly finalized Collect “{}”".format(collect)
+        messages.success(request, message)
+        # return redirect('collect', collect.id)
+        return JsonResponse({'status': 'success', 'message': message})
     elif not tc.clean_state:
         return fail("Unable to finalize collect. "
                     "Error while reverting to previous state: {}"
@@ -184,3 +192,53 @@ def attachment_proxy(request, fname):
     return HttpResponse(
         download_media(attachment.get('download_url')),
         content_type=attachment.get('mimetype'))
+
+
+def open_documents_folder(request, collect_id):
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("No collect with ID `{}`".format(collect_id))
+
+    open_finder_at(collect.get_documents_path())
+    return JsonResponse({'satus': 'success'})
+
+
+def help(request):
+    context = {'collect': {
+        'name': "E.S Commune-suffixe",
+        'commune': "Commune",
+        'form_title': "Enquête sociale Commune/suffixe",
+        'ona_form_id': "enquete-sociale-x",
+        'get_nb_papers': None,
+        'scan_form_title': "Scan certificats Commune/suffixe",
+        'ona_scan_form_id': "scan-certificats-x",
+        'medias_size': 10024,
+    }}
+    return render(request, 'help.html', context)
+
+
+@require_POST
+def collect_downgrade(request, collect_id):
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("No collect with ID `{}`".format(collect_id))
+
+    def fail(message):
+        messages.error(request, message)
+        # return redirect('collect', collect_id=collect.id)
+        return JsonResponse({'status': 'error', 'message': message})
+
+    tc = collect.downgrade()
+    if tc.reverted:
+        message = "Successfuly downgraded Collect “{}”".format(collect)
+        messages.success(request, message)
+        return JsonResponse({'status': 'success', 'message': message})
+    elif not tc.clean_state:
+        return fail("Unable to downgrade collect. "
+                    "Error while reverting to previous state: {}"
+                    .format(tc.exception))
+    else:
+        return fail("Unable to downgrade Collect. "
+                    "Reverted to previous state. {}"
+                    .format(tc.exception))

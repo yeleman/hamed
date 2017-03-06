@@ -1,16 +1,24 @@
-{% extends "base.html" %}
+{% extends "single.html" %}
+
+{% block title %}{{ collect.form_title }}{% endblock %}
+{% block title_link %}{% url 'collect' collect.id %}{% endblock %}
 
 {% block content %}
-<h1>{{ collect.name }}</h1>
-<p><a href="{% url 'collect' collect.id %}"><button class="btn btn-primary">Retour</button></a></p>
-<hr />
-<p><em>Nb de soumissions:</em> {{ collect.nb_submissions|default_if_none:"n/a" }}</p>
-<p><em>Nb d'indigents:</em> {{ collect.nb_indigents|default_if_none:"n/a" }}</p>
-<p><em>Nb de médias:</em> {{ collect.nb_medias|default_if_none:"n/a" }}</p>
-<p><em>Poids des médias:</em> {{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}</p>
-<hr />
 {% if collect.targets.count %}
+<table class="table table-striped table-bordered text-center">
+<caption>Mini statistiques</caption>
+<tr><th>Cibles</th><th>Hommes</th><th>Femmes</th><th>Age médian</th><th>Indigents</th><th>Médias</th></tr>
+<tr>
+	<td>{{ collect.nb_submissions|default_if_none:"n/a" }}</td>
+	<td>{{ collect.get_nb_men }}</td>
+	<td>{{ collect.get_nb_women }}</td>
+	<td>{% if collect.get_median_age%}{{ collect.get_median_age|floatformat }}a{% else %}n/a{% endif %}</td>
+	<td>{{ collect.nb_indigents|default_if_none:"n/a" }}</td>
+	<td>{{ collect.nb_medias|default_if_none:"n/a" }}{% if collect.nb_medias %} ({{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}){% endif %}</td>
+</tr>
+
 <table class="table table-striped">
+<caption>Aperçu des données de l'enquête, par cible</caption>
 <tr>
 	<th>ID</th>
 	<th>Nom</th>
