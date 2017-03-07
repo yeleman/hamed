@@ -209,7 +209,6 @@ class Collect(models.Model):
         return tc
 
     def downgrade(self):
-        print("**********", "DOWNGRADE", "********", "SM-INDEX", self.sm_index)
         # can't downgrade if at first step. Delete instead
         if self.sm_index < 0:
             return
@@ -256,10 +255,6 @@ class Collect(models.Model):
             icon = 'finalize'
         else:
             return None
-        # elif self.status == self.FINALIZED:
-        #     url = reverse('export',
-        #                   kwargs={'collect_id': self.id})
-        #     label = "Exporter les données de la collecte"
         return {'url': url, 'label': label, 'icon': icon}
 
     def change_status(self, new_status):

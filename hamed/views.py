@@ -36,6 +36,7 @@ class NewCollectForm(forms.ModelForm):
 
         cercle_id = Settings.cercle_id()
         self.fields['commune_id'] = forms.ChoiceField(
+            label="Commune",
             choices=get_communes(cercle_id))
 
 
@@ -53,7 +54,7 @@ def home(request):
 def collect(request, collect_id):
     collect = Collect.get_or_none(collect_id)
     if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
     context = {
         'collect': collect,
         'ona_form': get_form_detail(collect.ona_form_pk)
@@ -67,7 +68,7 @@ def collect(request, collect_id):
 def collect_data(request, collect_id):
     collect = Collect.get_or_none(collect_id)
     if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     context = {'collect': collect}
 
@@ -83,22 +84,31 @@ def start_collect(request):
     # make sure form is valid before processing
     form = NewCollectForm(request.POST)
     if not form.is_valid():
-        errors = "\n".join(form.errors['__all__'])
+        errors = []  # "\n".join(form.errors['__all__'])
+        for field, field_errors in form.errors.items():
+            if field == '__all__':
+                errors += field_errors
+            else:
+                for error in field_errors:
+                    errors.append("[{}] {}".format(
+                        form.fields[field].label, error))
         return fail("Informations incorrectes pour créér la collecte : {all}"
-                    .format(all=errors))
+                    .format(all="\n".join(errors)))
 
     tc = StartCollectTaskCollection(form=form)
     tc.process()
     if tc.successful:
-        messages.success(request, "Successfuly created Collect “{}”"
+        messages.success(request, "La collecte «{}» a bien été créée."
                                   .format(tc.output.get('collect')))
         return redirect('collect', tc.output.get('collect').id)
     elif not tc.clean_state:
-        return fail("Unable to create collect. "
-                    "Error while reverting to previous state: {}"
+        return fail("Impossible de créer la collecte. "
+                    "Erreur lors de la tentative "
+                    "de retour à l'état précédent : {}"
                     .format(tc.exception))
     else:
-        return fail("Unable to create Collect. Reverted to previous state. {}"
+        return fail("Impossible de créer la collecte. "
+                    "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
 
 
@@ -107,11 +117,10 @@ def end_collect(request, collect_id):
 
     collect = Collect.get_or_none(collect_id)
     if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     def fail(message):
         messages.error(request, message)
-        # return redirect('collect', collect_id=collect.id)
         return JsonResponse({'status': 'error', 'message': message})
 
     tc = EndCollectTaskCollection(collect=collect)
@@ -122,11 +131,13 @@ def end_collect(request, collect_id):
         return JsonResponse({'status': 'success', 'message': message})
         # return redirect('collect', collect.id)
     elif not tc.clean_state:
-        return fail("Unable to end collect. "
-                    "Error while reverting to previous state: {}"
+        return fail("Impossible de terminer la collecte. "
+                    "Erreur lors de la tentative "
+                    "de retour à l'état précédent : {}"
                     .format(tc.exception))
     else:
-        return fail("Unable to end Collect. Reverted to previous state. {}"
+        return fail("Impossible de terminer la collecte. "
+                    "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
 
 
@@ -135,11 +146,10 @@ def finalize_collect(request, collect_id):
 
     collect = Collect.get_or_none(collect_id)
     if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     def fail(message):
         messages.error(request, message)
-        # return redirect('collect', collect_id=collect.id)
         return JsonResponse({'status': 'error', 'message': message})
 
     tc = FinalizeCollectTaskCollection(collect=collect)
@@ -150,12 +160,13 @@ def finalize_collect(request, collect_id):
         # return redirect('collect', collect.id)
         return JsonResponse({'status': 'success', 'message': message})
     elif not tc.clean_state:
-        return fail("Unable to finalize collect. "
-                    "Error while reverting to previous state: {}"
+        return fail("Impossible de finaliser la collecte. "
+                    "Erreur lors de la tentative "
+                    "de retour à l'état précédent : {}"
                     .format(tc.exception))
     else:
-        return fail("Unable to finalize Collect. "
-                    "Reverted to previous state. {}"
+        return fail("Impossible de finaliser la collecte. "
+                    "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
 
 
@@ -197,7 +208,7 @@ def attachment_proxy(request, fname):
 def open_documents_folder(request, collect_id):
     collect = Collect.get_or_none(collect_id)
     if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     open_finder_at(collect.get_documents_path())
     return JsonResponse({'satus': 'success'})
@@ -222,11 +233,10 @@ def collect_downgrade(request, collect_id):
 
     collect = Collect.get_or_none(collect_id)
     if collect is None:
-        raise Http404("No collect with ID `{}`".format(collect_id))
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     def fail(message):
         messages.error(request, message)
-        # return redirect('collect', collect_id=collect.id)
         return JsonResponse({'status': 'error', 'message': message})
 
     tc = collect.downgrade()
@@ -235,10 +245,11 @@ def collect_downgrade(request, collect_id):
         messages.success(request, message)
         return JsonResponse({'status': 'success', 'message': message})
     elif not tc.clean_state:
-        return fail("Unable to downgrade collect. "
-                    "Error while reverting to previous state: {}"
+        return fail("Impossible de modifier l'état de la collecte. "
+                    "Erreur lors de la tentative "
+                    "de retour à l'état précédent : {}"
                     .format(tc.exception))
     else:
-        return fail("Unable to downgrade Collect. "
-                    "Reverted to previous state. {}"
+        return fail("Impossible de modifier l'état de la collecte. "
+                    "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
