@@ -161,7 +161,7 @@ def remove_targets_documents(targets):
 def cleanup_empty_folders(collect):
 
     # remove target's folders
-    for target in collect.targets:
+    for target in collect.targets.all():
         if P(target.get_folder_path()).exists():
             P(target.get_folder_path()).removedirs_p()
 
