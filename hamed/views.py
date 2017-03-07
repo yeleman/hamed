@@ -126,10 +126,9 @@ def end_collect(request, collect_id):
     tc = EndCollectTaskCollection(collect=collect)
     tc.process()
     if tc.successful:
-        message = "Successfuly ended Collect “{}”".format(collect)
+        message = "Collecte «{}» terminée.".format(collect)
         messages.success(request, message)
         return JsonResponse({'status': 'success', 'message': message})
-        # return redirect('collect', collect.id)
     elif not tc.clean_state:
         return fail("Impossible de terminer la collecte. "
                     "Erreur lors de la tentative "
@@ -155,9 +154,8 @@ def finalize_collect(request, collect_id):
     tc = FinalizeCollectTaskCollection(collect=collect)
     tc.process()
     if tc.successful:
-        message = "Successfuly finalized Collect “{}”".format(collect)
+        message = "Collecte «{}» finalisée.".format(collect)
         messages.success(request, message)
-        # return redirect('collect', collect.id)
         return JsonResponse({'status': 'success', 'message': message})
     elif not tc.clean_state:
         return fail("Impossible de finaliser la collecte. "
@@ -241,7 +239,7 @@ def collect_downgrade(request, collect_id):
 
     tc = collect.downgrade()
     if tc.reverted:
-        message = "Successfuly downgraded Collect “{}”".format(collect)
+        message = "État de la collecte «{}» modifié.".format(collect)
         messages.success(request, message)
         return JsonResponse({'status': 'success', 'message': message})
     elif not tc.clean_state:
