@@ -159,9 +159,10 @@ class TaskCollection(BaseTask):
                     task.process()
                     assert task.status == task.SUCCESS
                 except Exception as exp:
+                    if task.processing_exception:
+                        exp = task.processing_exception
                     logger.error(
-                        "Failed to process task #{}: {}"
-                        .format(index, exp))
+                        "Failed to process task #{}: {}".format(index, exp))
                     self.processing_exception = exp
                     raise TaskFailed()
                 else:
