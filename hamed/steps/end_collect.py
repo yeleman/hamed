@@ -11,7 +11,7 @@ from hamed.exports.xlsx.xlsform import gen_xlsform
 from hamed.ona import (upload_xlsform, delete_form, disable_form, enable_form,
                        get_form_data, upload_csv_media,
                        delete_media, get_media_id)
-from hamed.utils import gen_targets_documents
+from hamed.utils import gen_targets_documents, remove_targets_documents
 
 
 class DisableONAForm(Task):
@@ -62,7 +62,8 @@ class GenerateTargetsDocuments(Task):
 
     def _revert(self):
         ''' remove generated documents for targets '''
-        # TODO: remove generated files
+        if self.kwargs.get('collect'):
+            remove_targets_documents(self.kwargs['collect'].targets.all())
 
 
 class GenerateItemsetsCSV(Task):

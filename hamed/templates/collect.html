@@ -180,7 +180,6 @@ $('#downgrade-btn').on('click', function(e) {
 		"{% url 'collect_downgrade' collect.id %}",
 		"Vers… {{ collect.previous_verbose_status }}",
 		false, function () {
-			alert("myways");
 			{% if not collect.has_ended %}window.location.replace("{% url 'home' %}");{% endif %}
 		});
 });

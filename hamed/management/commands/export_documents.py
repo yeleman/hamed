@@ -9,7 +9,7 @@ from django.utils import translation
 from django.conf import settings
 
 from hamed.models.targets import Target
-from hamed.utils import gen_targets_documents
+from hamed.utils import gen_targets_documents, export_target_medias
 
 logger = logging.getLogger(__name__)
 
@@ -34,4 +34,5 @@ class Command(BaseCommand):
 
         # generate paper form
         gen_targets_documents([target])
+        export_target_medias(target)
         translation.deactivate()
