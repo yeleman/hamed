@@ -108,9 +108,53 @@ def gen_targets_documents(targets):
 
         # survey is also copied (not synlinked --printer issue--) in prints
         survey_link_fpath = os.path.join(survey_links_folder, survey_fname)
-        # remove first as symlink can't be forced
-        # P(survey_link_fpath).unlink_p()
         P(survey_fpath).copy2(survey_link_fpath)
+
+
+def remove_targets_documents(targets):
+    if isinstance(targets, QuerySet):
+        collects = set([t['collect'] for t in targets.values('collect')])
+    else:
+        collects = set([t.collect for t in targets])
+
+    for target in targets:
+
+        # remove social survey in personnal folder
+        survey_fname = get_document_fname('survey', target)
+        survey_fpath = os.path.join(
+            target.get_folder_path(),
+            survey_fname)
+        P(survey_fpath).remove_p()
+
+        # prints folder contains certificates and a copy of survey
+        prints_folder = os.path.join(
+            target.collect.get_documents_path(), PRINTS)
+        for kind, subfolder in (
+                ('indigence', INDIGENCES),
+                ('residence', RESIDENCES),
+                ('survey', SURVEYS)):
+            document_fpath = os.path.join(
+                prints_folder,
+                subfolder,
+                get_document_fname(kind, target))
+            P(document_fpath).remove_p()
+        # attempt to remove empty personnal folder
+        P(target.get_folder_path()).removedirs_p()
+
+    # try to remove folders if empty
+    for collect in collects:
+        empty_folders = [
+            os.path.join(collect.get_documents_path(), PRINTS, subfolder)
+            for subfolder in (INDIGENCES, RESIDENCES, SURVEYS)
+        ]
+        empty_folders += [
+            os.path.join(collect.get_documents_path(), PRINTS),
+            os.path.join(collect.get_documents_path(), PERSONAL_FILES),
+            collect.get_documents_path()
+        ]
+        for folder in empty_folders:
+            if P(folder).exists():
+                P(folder).removedirs_p()
 
 
 def get_attachment(dataset, question_value, main_key='_attachments'):
