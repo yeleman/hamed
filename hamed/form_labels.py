@@ -15,7 +15,6 @@ def build_form_labels(xlsform_path):
 
     # retrive JSONForm
     jsonform = xlsform.to_json_dict()
-    # from pprint import pprint as pp ; pp(jsonform)
 
     # we'll want labels as {name: label}
     labelslist2dict = lambda l: {e['name']: e['label'] for e in l}
@@ -29,6 +28,8 @@ def build_form_labels(xlsform_path):
                         and 'external' not in item['type']:
                     labels.update(
                         {item['name']: labelslist2dict(item['children'])})
+                if 'children' in item:
+                    walk(item['children'])
                 else:
                     walk(item)
             else:
