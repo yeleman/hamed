@@ -46,9 +46,11 @@
 <dt>Poids des médias:</dt>
 <dd>{{ collect.medias_size|filesizeformat|default_if_none:"n/a" }}</dd>
 
-<dt>Nb soum. <span title="{{ collect.ona_form_id }} - {{ collect.ona_form_pk }}">ONA</span>:</dt>
+<dt>Nb soum. <span title="ONA id: {{ collect.ona_form_id }}
+ONA pk: {{ collect.ona_form_pk }}">ONA</span>:</dt>
 <dd>{{ ona_form.num_of_submissions|default:"n/a" }}</dd>
-<dt>Nb soum. scan <span title="{{ collect.ona_scan_form_id }} - {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
+<dt>Nb soum. scan <span title="ONA id: {{ collect.ona_scan_form_id }}
+ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 <dd>{{ ona_scan_form.num_of_submissions|default:"n/a" }}</dd>
 
 <dt>Changement statut</dt>
@@ -180,7 +182,7 @@ $('#downgrade-btn').on('click', function(e) {
 		"{% url 'collect_downgrade' collect.id %}",
 		"Vers… {{ collect.previous_verbose_status }}",
 		false, function () {
-			{% if not collect.has_ended %}window.location.replace("{% url 'home' %}");{% endif %}
+			{% if not collect.has_ended %}window.location.replace("{% url 'home' %}");{% else %}location.reload();{% endif %}
 		});
 });
 
