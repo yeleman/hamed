@@ -261,6 +261,19 @@ class Target(models.Model):
         except IndexError:
             return None
 
+    def list_attachments(self):
+        al = []
+        for attach_key, attachment in self.attachments().items():
+            if attach_key == 'signature':
+                continue
+            if isinstance(attachment, list):
+                for person in attachment:
+                    for pattach_key, pattachment in person.items():
+                        al.append(pattachment)
+            else:
+                al.append(attachment)
+        return al
+
     def get_folder_fname(self):
         return self.fname()
 

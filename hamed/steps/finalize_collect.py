@@ -7,8 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from hamed.steps import Task, TaskCollection
-from hamed.ona import (disable_form, enable_form,
-                       get_form_data, upload_csv_media, delete_media)
+from hamed.ona import (disable_form, enable_form, get_form_data)
+from hamed.utils import (export_collect_data, remove_exported_collect_data,
+                         remove_collect_medias, export_collect_medias)
 
 
 class DisableONAScanForm(Task):
@@ -56,11 +57,25 @@ class ExportAllData(Task):
 
     def _process(self):
         ''' export complete JSON data to file and medias '''
-        pass
+        export_collect_data(self.kwargs['collect'])
 
     def _revert(self):
         ''' remove such files (JSON export and all medias) from disk '''
-        pass
+        if self.kwargs.get('collect'):
+            remove_exported_collect_data(self.kwargs['collect'])
+
+
+class ExportAllMedias(Task):
+    required_inputs = ['collect']
+
+    def _process(self):
+        ''' export complete JSON data to file and medias '''
+        export_collect_medias(self.kwargs['collect'])
+
+    def _revert(self):
+        ''' remove such files (JSON export and all medias) from disk '''
+        if self.kwargs.get('collect'):
+            remove_collect_medias(self.kwargs['collect'])
 
 
 class MarkCollectAsFinalized(Task):
@@ -79,4 +94,5 @@ class FinalizeCollectTaskCollection(TaskCollection):
     tasks = [DisableONAScanForm,
              DownloadScanData,
              ExportAllData,
+             ExportAllMedias,
              MarkCollectAsFinalized]

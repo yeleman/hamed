@@ -41,35 +41,38 @@ def get_auth_header():
 
 
 def post(path, payload={}, headers={}, files={}, params={},
-         expected_codes=(200, 201), as_json=True, silent_failure=False):
+         expected_codes=(200, 201), as_json=True, as_bytes=False,
+         silent_failure=False):
     return request(method='POST', path=path, payload=payload, params=params,
                    headers=headers, files=files,
                    expected_codes=expected_codes,
-                   as_json=as_json,
+                   as_json=as_json, as_bytes=as_bytes,
                    silent_failure=silent_failure)
 
 
 def delete(path, payload={}, headers={}, files={}, params={},
-           expected_codes=(200, 201), as_json=False, silent_failure=False):
+           expected_codes=(200, 201), as_json=False, as_bytes=False,
+           silent_failure=False):
     return request(method='DELETE', path=path, payload=payload, params=params,
                    headers=headers, files=files,
                    expected_codes=expected_codes,
-                   as_json=as_json,
+                   as_json=as_json, as_bytes=as_bytes,
                    silent_failure=silent_failure)
 
 
 def get(path, payload={}, headers={}, files={}, params={},
-        expected_codes=(200, 204), as_json=True, silent_failure=False):
+        expected_codes=(200, 204), as_json=True, as_bytes=False,
+        silent_failure=False):
     return request(method='GET', path=path,
                    payload=payload, params=params,
                    headers=headers, files=files,
                    expected_codes=expected_codes,
-                   as_json=as_json,
+                   as_json=as_json, as_bytes=as_bytes,
                    silent_failure=silent_failure)
 
 
 def request(method, path, payload={}, headers={}, files={}, params={},
-            expected_codes=(200, 201, 204), as_json=True,
+            expected_codes=(200, 201, 204), as_json=True, as_bytes=False,
             timeout=60,
             silent_failure=False):
     url = get_url(path)
@@ -85,6 +88,8 @@ def request(method, path, payload={}, headers={}, files={}, params={},
     # from pprint import pprint as pp ; pp(req.request.headers)
     try:
         assert req.status_code in expected_codes
+        if as_bytes:
+            return req.content
         if as_json:
             return req.json()
         return req.text
@@ -198,3 +203,17 @@ def get_media_id(form_pk, media_fname):
         return filtered[0]['id']
     except IndexError:
         return None
+
+
+def download_xlsx_export(collect):
+    return download_export_file(collect, 'xlsx')
+
+
+def download_json_export(collect):
+    return download_export_file(collect, 'json')
+
+
+def download_export_file(collect, format_extension):
+    url = get_api_path("/data/{pk}.{ext}}".format(
+        pk=collect.ona_form_pk, ext=format_extension))
+    return get(url, as_bytes=True)

@@ -17,7 +17,8 @@ from hamed.exports.pdf.indigence_certificate import \
     gen_indigence_certificate_pdf
 from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
-from hamed.ona import download_media
+from hamed.ona import (
+    download_media, download_xlsx_export, download_json_export)
 
 logger = logging.getLogger(__name__)
 
@@ -59,16 +60,25 @@ def get_document_fname(kind, target):
     templates = {
         'survey': "{id}_enquete-sociale.pdf",
         'indigence': "{id}_certificat-indigence-vierge.pdf",
-        'residence': "{id}_certificat-residence-vierge.pdf"
+        'residence': "{id}_certificat-residence-vierge.pdf",
     }
     return templates.get(kind).format(id=target.identifier)
 
 
-def gen_targets_documents(targets):
+def get_export_fname(kind, collect):
+    templates = {
+        'json': "{ona_id}.xlsx",
+        'xlsx': "{ona_id}.json",
+    }
+    return templates.get(kind).format(ona_id=collect.ona_form_id)
 
+
+def gen_targets_documents(targets):
+    from hamed.models.collects import Collect
     # ensure we have destinations folder
     if isinstance(targets, QuerySet):
-        collects = set([t['collect'] for t in targets.values('collect')])
+        collects = set([Collect.get_or_none(t['collect'])
+                        for t in targets.values('collect')])
     else:
         collects = set([t.collect for t in targets])
 
@@ -113,8 +123,10 @@ def gen_targets_documents(targets):
 
 
 def remove_targets_documents(targets):
+    from hamed.models.collects import Collect
     if isinstance(targets, QuerySet):
-        collects = set([t['collect'] for t in targets.values('collect')])
+        collects = set([Collect.get_or_none(t['collect'])
+                        for t in targets.values('collect')])
     else:
         collects = set([t.collect for t in targets])
 
@@ -142,20 +154,30 @@ def remove_targets_documents(targets):
         # attempt to remove empty personnal folder
         P(target.get_folder_path()).removedirs_p()
 
-    # try to remove folders if empty
     for collect in collects:
-        empty_folders = [
-            os.path.join(collect.get_documents_path(), PRINTS, subfolder)
-            for subfolder in (INDIGENCES, RESIDENCES, SURVEYS)
-        ]
-        empty_folders += [
-            os.path.join(collect.get_documents_path(), PRINTS),
-            os.path.join(collect.get_documents_path(), PERSONAL_FILES),
-            collect.get_documents_path()
-        ]
-        for folder in empty_folders:
-            if P(folder).exists():
-                P(folder).removedirs_p()
+        cleanup_empty_folders(collect)
+
+
+def cleanup_empty_folders(collect):
+
+    # remove target's folders
+    for target in collect.targets:
+        if P(target.get_folder_path()).exists():
+            P(target.get_folder_path()).removedirs_p()
+
+    # try to remove folders if empty
+    empty_folders = [
+        os.path.join(collect.get_documents_path(), PRINTS, subfolder)
+        for subfolder in (INDIGENCES, RESIDENCES, SURVEYS)
+    ]
+    empty_folders += [
+        os.path.join(collect.get_documents_path(), PRINTS),
+        os.path.join(collect.get_documents_path(), PERSONAL_FILES),
+        collect.get_documents_path()
+    ]
+    for folder in empty_folders:
+        if P(folder).exists():
+            P(folder).removedirs_p()
 
 
 def export_collect_medias(collect):
@@ -180,15 +202,50 @@ def export_target_medias(target):
             logger.exception(exp)
             raise
 
-    for attach_key, attachment in target.attachments().items():
-        if attach_key == 'signature':
-            continue
-        if isinstance(attachment, list):
-            for person in attachment:
-                for pattach_key, pattachment in person.items():
-                    export_media(pattach_key, pattachment)
-        else:
-            export_media(attach_key, attachment)
+    for attachment in target.list_attachments():
+        export_media(attachment)
+
+
+def remove_collect_medias(collect):
+    # medias are tied to targets
+    for target in collect.targets:
+        # delete each media
+        for attachment in target.list_attachments():
+            fpath = os.path.join(target.get_folder_path(),
+                                 attachment['export_fname'])
+            P(fpath).remove_p()
+
+    cleanup_empty_folders(collect)
+
+
+def export_collect_data(collect):
+    check_targets_documents_folder(collect)
+
+    export_collect_data_as_xlsx(collect)
+    export_collect_data_as_json(collect)
+
+
+def export_collect_data_as_json(collect):
+    fpath = os.path.join(collect.get_documents_path(),
+                         get_export_fname('json', collect))
+    with open(fpath, 'wb') as f:
+        f.write(download_json_export(collect))
+
+
+def export_collect_data_as_xlsx(collect):
+    fpath = os.path.join(collect.get_documents_path(),
+                         get_export_fname('xlsx', collect))
+    with open(fpath, 'wb') as f:
+        f.write(download_xlsx_export(collect))
+
+
+def remove_exported_collect_data(collect):
+    for format in ('json', 'xlsx'):
+        fpath = os.path.join(collect.get_documents_path(),
+                             get_export_fname(format, collect))
+        P(fpath).remove_p()
+
+    cleanup_empty_folders(collect)
 
 
 def get_attachment(dataset, question_value, main_key='_attachments'):
