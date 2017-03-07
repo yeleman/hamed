@@ -17,6 +17,7 @@ from hamed.exports.pdf.indigence_certificate import \
     gen_indigence_certificate_pdf
 from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
+from hamed.ona import download_media
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,39 @@ def remove_targets_documents(targets):
         for folder in empty_folders:
             if P(folder).exists():
                 P(folder).removedirs_p()
+
+
+def export_collect_medias(collect):
+    # ensure folder is ready
+    check_targets_documents_folder(collect)
+
+    for target in collect.targets.all():
+        export_target_medias(target)
+
+
+def export_target_medias(target):
+    # ensure personnal folder OK
+    P(target.get_folder_path()).makedirs_p()
+
+    def export_media(attachment_key, attachment):
+        try:
+            output_fpath = os.path.join(target.get_folder_path(),
+                                        attachment['export_fname'])
+            with open(output_fpath, 'wb') as f:
+                f.write(download_media(attachment['download_url']).read())
+        except Exception as exp:
+            logger.exception(exp)
+            raise
+
+    for attach_key, attachment in target.attachments().items():
+        if attach_key == 'signature':
+            continue
+        if isinstance(attachment, list):
+            for person in attachment:
+                for pattach_key, pattachment in person.items():
+                    export_media(pattach_key, pattachment)
+        else:
+            export_media(attach_key, attachment)
 
 
 def get_attachment(dataset, question_value, main_key='_attachments'):
