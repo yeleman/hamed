@@ -11,6 +11,11 @@ logger = logging.getLogger(__name__)
 
 class Settings(models.Model):
 
+    class Meta:
+        verbose_name = "Setting"
+        verbose_name_plural = "Settings"
+        ordering = ['key']
+
     ONA_SERVER = 'ona-server'
     ONA_USERNAME = 'ona-username'
     ONA_TOKEN = 'ona-token'

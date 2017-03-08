@@ -62,6 +62,7 @@ class Collect(models.Model):
 
     class Meta:
         unique_together = [('commune_id', 'suffix')]
+        ordering = ['-started_on']
 
     status = models.CharField(max_length=50, choices=STATUSES().items(),
                               default=STARTED)
@@ -70,9 +71,12 @@ class Collect(models.Model):
     ended_on = models.DateTimeField(blank=True, null=True)
     finalized_on = models.DateTimeField(blank=True, null=True)
 
-    cercle_id = models.CharField(max_length=100, default=Settings.cercle_id)
-    commune_id = models.CharField(max_length=100, choices=[],
-                                  verbose_name="Commune")
+    cercle_id = models.CharField(
+        verbose_name="Cercle",
+        max_length=100, default=Settings.cercle_id)
+    commune_id = models.CharField(
+        verbose_name="Commune",
+        max_length=100, choices=[],)
     suffix = models.CharField(max_length=50, verbose_name="Suffixe")
     mayor_title = models.CharField(max_length=50,
                                    choices=MAYOR_TITLES.items(),

@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 class Target(models.Model):
 
+    class Meta:
+        ordering = ['-collect__started_on', 'last_name', 'first_name']
+
     MALE = 'male'
     FEMALE = 'female'
     GENDERS = OrderedDict([

@@ -1,7 +1,7 @@
 [{
   "fields": {
   	"key": "ona-server",
-    "value": "http://ramed-server"
+    "value": "http://ona.cercle"
   },
   "model": "hamed.Settings",
   "pk": 0
