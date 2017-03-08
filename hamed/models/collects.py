@@ -70,10 +70,11 @@ class Collect(models.Model):
     started_on = models.DateTimeField(auto_now_add=True)
     ended_on = models.DateTimeField(blank=True, null=True)
     finalized_on = models.DateTimeField(blank=True, null=True)
+    uploaded_on = models.DateTimeField(blank=True, null=True)
 
     cercle_id = models.CharField(
         verbose_name="Cercle",
-        max_length=100, default=Settings.cercle_id)
+        max_length=100, default="33")  # Settings.cercle_id
     commune_id = models.CharField(
         verbose_name="Commune",
         max_length=100, choices=[],)
@@ -176,6 +177,10 @@ class Collect(models.Model):
     @property
     def finalized(self):
         return self.status == self.FINALIZED
+
+    @property
+    def uploaded(self):
+        return self.uploaded_on is not None
 
     def has_ended(self):
         return self.status in (self.ENDED, self.FINALIZED)
@@ -381,3 +386,7 @@ class Collect(models.Model):
 
     def export_data(self):
         return [t.export_data() for t in self.targets.all()]
+
+    def mark_uploaded(self, server_response):
+        self.uploaded_on = timezone.now()
+        self.save()

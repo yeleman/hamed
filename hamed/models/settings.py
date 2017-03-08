@@ -21,6 +21,7 @@ class Settings(models.Model):
     ONA_TOKEN = 'ona-token'
     CERCLE_ID = 'cercle-id'
     DATAENTRY_USERNAME = 'dataentry-username'
+    UPLOAD_SERVER = 'upload-server'
 
     key = models.SlugField(primary_key=True)
     value = models.CharField(max_length=500)
@@ -61,3 +62,7 @@ class Settings(models.Model):
     @classmethod
     def dataentry_username(cls):
         return cls.get_value_or_none(cls.DATAENTRY_USERNAME)
+
+    @classmethod
+    def upload_server(cls):
+        return cls.get_value_or_none(cls.UPLOAD_SERVER)

@@ -20,7 +20,8 @@ from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 from hamed.locations import get_communes
-from hamed.utils import open_finder_at, get_export_fname, MIMES
+from hamed.utils import (open_finder_at,
+                         get_export_fname, MIMES, upload_export_data)
 
 logger = logging.getLogger(__name__)
 
@@ -269,3 +270,27 @@ def collect_downgrade(request, collect_id):
         return fail("Impossible de modifier l'état de la collecte. "
                     "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
+
+
+@require_POST
+def upload_data(request, collect_id):
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
+    def fail(message):
+        messages.error(request, message)
+        return JsonResponse({'status': 'error', 'message': message})
+
+    try:
+        result = upload_export_data(collect)
+    except Exception as exp:
+        result = {'status': 'failed', 'message': str(exp)}
+    if result.get('status') == "success":
+        message = "Données transmises à l'ANAM : {msg}".format(
+            msg=result.get('message'))
+        messages.success(request, message)
+        return JsonResponse({'status': 'success', 'message': message})
+    else:
+        return fail("Impossible de transmettre à l'ANAM : {msg}"
+                    .format(msg=result.get('message')))

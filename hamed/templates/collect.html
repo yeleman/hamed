@@ -53,6 +53,9 @@ ONA pk: {{ collect.ona_form_pk }}">ONA</span>:</dt>
 ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 <dd>{{ ona_scan_form.num_of_submissions|default:"n/a" }}</dd>
 
+<dt>Transmission ANAM</dt>
+<dd>{{ collect.uploaded_on }}</dd>
+
 <dt>Changement statut</dt>
 <dd><button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#status-change-modal"><span class="glyphicon glyphicon-alert"></span> modifier la collecte</button></dd>
 </dl>
@@ -112,6 +115,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 <p><a href="{% url 'collect_exports' collect.id 'xlsx' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Télécharger l'export Excel</button></a></p>
 <h3>Données brutes ANAM</h3>
 <p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="{% url 'collect_exports' collect.id 'json' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
+
 <h3>Fichiers médias</h3>
 <p><button id="export-usb" class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé</button></p>
 {% endif %}
@@ -192,5 +196,12 @@ $('#start-usb').on('click', function () {
 	doConnect("ws://localhost:8888");
 });
 
+$('#upload-anam').on('click', function () {
+	postWithLoading(
+		"{% url 'collect_upload' collect.id %}",
+		"Télétransmission ANAM",
+		true);
+
+});
 
 {% endblock %}

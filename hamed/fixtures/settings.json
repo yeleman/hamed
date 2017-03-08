@@ -37,4 +37,12 @@
   },
   "model": "hamed.Settings",
   "pk": 4
+},
+{
+  "fields": {
+  	"key": "upload-server",
+    "value": "http://192.168.6.152:10000"
+  },
+  "model": "hamed.Settings",
+  "pk": 5
 }]

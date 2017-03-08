@@ -27,6 +27,8 @@ urlpatterns = [
         views.collect_downgrade, name='collect_downgrade'),
     url(r'^collect/(?P<collect_id>[0-9]+)/export.(?P<format>json|xlsx)$',
         views.exports_proxy, name='collect_exports'),
+    url(r'^collect/(?P<collect_id>[0-9]+)/upload/?$',
+        views.upload_data, name='collect_upload'),
 
     url(r'^help/?$', views.help, name='help'),
 

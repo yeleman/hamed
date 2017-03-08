@@ -10,6 +10,7 @@ import platform
 import subprocess
 import json
 
+import requests
 from path import Path as P
 from django.db.models import QuerySet
 
@@ -290,3 +291,12 @@ def unshare_form(form_pk):
     return add_role_to_form(form_pk,
                             usernames=Settings.dataentry_username(),
                             role=READONLY_ROLE)
+
+
+def upload_export_data(collect):
+    url = "/".join([Settings.upload_server(), "upload"])
+    req = requests.post(url=url, json=collect.export_data())
+    assert req.status_code == 200
+    assert req.json()['status'] == 'success'
+    collect.mark_uploaded(req.json())
+    return req.json()
