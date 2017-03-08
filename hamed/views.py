@@ -214,8 +214,11 @@ def exports_proxy(request, collect_id, format):
     fname = get_export_fname(format, collect)
     fpath = os.path.join(collect.get_documents_path(), fname)
     with open(fpath, 'rb') as fd:
-        return HttpResponse(
+        response = HttpResponse(
             fd.read(), content_type=MIMES.get(format))
+        response['Content-Disposition'] = \
+            'attachment; filename="{}"'.format(fname)
+        return response
 
 
 def open_documents_folder(request, collect_id):
