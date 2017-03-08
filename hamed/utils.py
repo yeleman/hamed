@@ -270,11 +270,11 @@ def open_finder_at(abs_path):
 
 def share_form(form_pk):
     return add_role_to_form(form_pk,
-                            username=Settings.dataentry_username(),
+                            usernames=Settings.dataentry_username(),
                             role=DATAENTRY_ROLE)
 
 
 def unshare_form(form_pk):
     return add_role_to_form(form_pk,
-                            username=Settings.dataentry_username(),
+                            usernames=Settings.dataentry_username(),
                             role=READONLY_ROLE)
