@@ -284,3 +284,9 @@ class Target(models.Model):
         return os.path.join(self.collect.get_documents_path(),
                             PERSONAL_FILES,
                             self.get_folder_fname())
+
+    def export_data(self):
+        data = self.dataset.copy()
+        data.update({'_hamed_attachments': self.attachments()})
+        return data
+

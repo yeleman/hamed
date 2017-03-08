@@ -231,7 +231,8 @@ def export_collect_data_as_json(collect):
     fpath = os.path.join(collect.get_documents_path(),
                          get_export_fname('json', collect))
     with open(fpath, 'wb') as f:
-        f.write(download_json_export(collect))
+        # f.write(download_json_export(collect))  # ONA version
+        json.dump(collect.export_data(), f, indent=4)  # hamed version
 
 
 def export_collect_data_as_xlsx(collect):

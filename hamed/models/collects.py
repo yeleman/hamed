@@ -378,3 +378,6 @@ class Collect(models.Model):
 
     def get_nb_papers(self):
         return self.nb_submissions * 3 if self.nb_submissions else None
+
+    def export_data(self):
+        return [t.export_data() for t in self.targets.all()]
