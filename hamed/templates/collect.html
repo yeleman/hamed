@@ -109,9 +109,9 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 
 {% if collect.has_finalized %}
 <h2>Export des données</h2>
-<p><a href="ds"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Télécharger l'export Excel</button></a></p>
+<p><a href="{% url 'collect_exports' collect.id 'xlsx' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Télécharger l'export Excel</button></a></p>
 <h3>Données brutes ANAM</h3>
-<p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="ds"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
+<p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="{% url 'collect_exports' collect.id 'json' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
 <h3>Fichiers médias</h3>
 <p><button id="export-usb" class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé</button></p>
 {% endif %}
@@ -186,6 +186,11 @@ $('#downgrade-btn').on('click', function(e) {
 		});
 });
 
+
+$('#start-usb').on('click', function () {
+	// connect to WebSocket
+	doConnect("ws://localhost:8888");
+});
 
 
 {% endblock %}

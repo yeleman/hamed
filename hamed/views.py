@@ -20,7 +20,7 @@ from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 from hamed.locations import get_communes
-from hamed.utils import open_finder_at
+from hamed.utils import open_finder_at, get_export_fname, MIMES
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +201,21 @@ def attachment_proxy(request, fname):
     return HttpResponse(
         download_media(attachment.get('download_url')),
         content_type=attachment.get('mimetype'))
+
+
+def exports_proxy(request, collect_id, format):
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
+    if format not in ('xlsx', 'json'):
+        raise Http404("Aucun export pour le format `{}`".format(format))
+
+    fname = get_export_fname(format, collect)
+    fpath = os.path.join(collect.get_documents_path(), fname)
+    with open(fpath, 'rb') as fd:
+        return HttpResponse(
+            fd.read(), content_type=MIMES.get(format))
 
 
 def open_documents_folder(request, collect_id):

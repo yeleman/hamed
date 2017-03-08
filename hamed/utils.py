@@ -20,7 +20,7 @@ from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
 from hamed.models.settings import Settings
 from hamed.ona import (download_media, download_xlsx_export,
-                       download_json_export,
+                       download_json_export, XLSX_MIME,
                        add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,10 @@ PRINTS = "Impressions"
 SURVEYS = "Enquetes"
 INDIGENCES = "Certificats indigence"
 RESIDENCES = "Certificats residence"
+MIMES = {
+    'json': "application/json",
+    'xlsx': XLSX_MIME,
+}
 
 
 def gen_targets_csv(targets):
