@@ -69,8 +69,8 @@ def get_document_fname(kind, target):
 
 def get_export_fname(kind, collect):
     templates = {
-        'json': "{ona_id}.xlsx",
-        'xlsx': "{ona_id}.json",
+        'xlsx': "{ona_id}.xlsx",
+        'json': "{ona_id}.json",
     }
     return templates.get(kind).format(ona_id=collect.ona_form_id())
 
