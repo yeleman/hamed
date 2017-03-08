@@ -231,14 +231,14 @@ def export_collect_data_as_json(collect):
     fpath = os.path.join(collect.get_documents_path(),
                          get_export_fname('json', collect))
     with open(fpath, 'wb') as f:
-        f.write(download_json_export(collect).read())
+        f.write(download_json_export(collect))
 
 
 def export_collect_data_as_xlsx(collect):
     fpath = os.path.join(collect.get_documents_path(),
                          get_export_fname('xlsx', collect))
     with open(fpath, 'wb') as f:
-        f.write(download_xlsx_export(collect).read())
+        f.write(download_xlsx_export(collect))
 
 
 def remove_exported_collect_data(collect):
