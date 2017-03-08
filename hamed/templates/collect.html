@@ -101,7 +101,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
   </div>
 </div>
 
-{% if collect.has_ended %}
+{% if collect.has_ended  and collect.nb_submissions %}
 <h2>Impression des documents</h2>
 <p><button id="open-folder" class="btn btn-default"><span class="glyphicon glyphicon-print"></span> Voir les PDF à imprimer</button></p>
 <p class="setting">{{ collect.get_documents_path }}</p>
