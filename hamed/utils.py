@@ -8,6 +8,7 @@ import csv
 import os
 import platform
 import subprocess
+import json
 
 from path import Path as P
 from django.db.models import QuerySet
@@ -18,9 +19,8 @@ from hamed.exports.pdf.indigence_certificate import \
 from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
 from hamed.models.settings import Settings
-from hamed.ona import (
-    download_media, download_xlsx_export, download_json_export,
-    add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
+from hamed.ona import (download_media, download_xlsx_export,
+                       add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
 
 logger = logging.getLogger(__name__)
 
