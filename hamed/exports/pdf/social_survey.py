@@ -313,7 +313,7 @@ def gen_social_survey_pdf(target):
     story.append(draw_paragraph_sub_title_h3("Charges"))
     story.append(draw_paragraph("", concat(
         ["<u>Loyer</u> : {}/mois".format(number_format(loyer)),
-         "<u>Impot</u> : {}/an".format(number_format(impot)),
+         "<u>Impôt</u> : {}/an".format(number_format(impot)),
          "<u>Dettes</u> : {}".format(number_format(dettes)),
          "<u>Aliments</u> : {}/mois".format(number_format(aliments)),
          "<u>Santé</u> : {}/mois".format(number_format(sante)), ], sep=". ")))
