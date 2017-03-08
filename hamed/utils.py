@@ -8,6 +8,7 @@ import csv
 import os
 import platform
 import subprocess
+import json
 
 from path import Path as P
 from django.db.models import QuerySet
@@ -18,9 +19,9 @@ from hamed.exports.pdf.indigence_certificate import \
 from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
 from hamed.models.settings import Settings
-from hamed.ona import (
-    download_media, download_xlsx_export, download_json_export,
-    add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
+from hamed.ona import (download_media, download_xlsx_export,
+                       download_json_export,
+                       add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +70,10 @@ def get_document_fname(kind, target):
 
 def get_export_fname(kind, collect):
     templates = {
-        'json': "{ona_id}.xlsx",
-        'xlsx': "{ona_id}.json",
+        'xlsx': "{ona_id}.xlsx",
+        'json': "{ona_id}.json",
     }
-    return templates.get(kind).format(ona_id=collect.ona_form_id)
+    return templates.get(kind).format(ona_id=collect.ona_form_id())
 
 
 def gen_targets_documents(targets):
@@ -194,7 +195,7 @@ def export_target_medias(target):
     # ensure personnal folder OK
     P(target.get_folder_path()).makedirs_p()
 
-    def export_media(attachment_key, attachment):
+    def export_media(attachment):
         try:
             output_fpath = os.path.join(target.get_folder_path(),
                                         attachment['export_fname'])
@@ -210,7 +211,7 @@ def export_target_medias(target):
 
 def remove_collect_medias(collect):
     # medias are tied to targets
-    for target in collect.targets:
+    for target in collect.targets.all():
         # delete each media
         for attachment in target.list_attachments():
             fpath = os.path.join(target.get_folder_path(),
@@ -227,11 +228,18 @@ def export_collect_data(collect):
     export_collect_data_as_json(collect)
 
 
-def export_collect_data_as_json(collect):
+def export_collect_data_as_onajson(collect):
     fpath = os.path.join(collect.get_documents_path(),
                          get_export_fname('json', collect))
     with open(fpath, 'wb') as f:
         f.write(download_json_export(collect))
+
+
+def export_collect_data_as_json(collect):
+    fpath = os.path.join(collect.get_documents_path(),
+                         get_export_fname('json', collect))
+    with open(fpath, 'w', encoding="UTF-8") as f:
+        json.dump(collect.export_data(), f, indent=4)
 
 
 def export_collect_data_as_xlsx(collect):

@@ -5,7 +5,7 @@
 {% block title_link %}{% url 'home' %}{% endblock %}
 
 {% block content %}
-
+<a href="{% url 'help' %}" class="floating"><button class="btn btn-default"><span class="glyphicon glyphicon-book"></span> Guide d'utilisation</button></a>
 <h2>Collectes en cours</h2>
 {% include "collects_table.html" with collects=collects.actives switch="active" %}
 
