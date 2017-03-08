@@ -20,6 +20,7 @@ from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
 from hamed.models.settings import Settings
 from hamed.ona import (download_media, download_xlsx_export,
+                       download_json_export,
                        add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
 
 logger = logging.getLogger(__name__)
@@ -227,12 +228,18 @@ def export_collect_data(collect):
     export_collect_data_as_json(collect)
 
 
-def export_collect_data_as_json(collect):
+def export_collect_data_as_onajson(collect):
     fpath = os.path.join(collect.get_documents_path(),
                          get_export_fname('json', collect))
     with open(fpath, 'wb') as f:
-        # f.write(download_json_export(collect))  # ONA version
-        json.dump(collect.export_data(), f, indent=4)  # hamed version
+        f.write(download_json_export(collect))
+
+
+def export_collect_data_as_json(collect):
+    fpath = os.path.join(collect.get_documents_path(),
+                         get_export_fname('json', collect))
+    with open(fpath, 'w', encoding="UTF-8") as f:
+        json.dump(collect.export_data(), f, indent=4)
 
 
 def export_collect_data_as_xlsx(collect):
