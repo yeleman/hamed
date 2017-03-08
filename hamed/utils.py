@@ -195,7 +195,7 @@ def export_target_medias(target):
     # ensure personnal folder OK
     P(target.get_folder_path()).makedirs_p()
 
-    def export_media(attachment_key, attachment):
+    def export_media(attachment):
         try:
             output_fpath = os.path.join(target.get_folder_path(),
                                         attachment['export_fname'])
@@ -211,7 +211,7 @@ def export_target_medias(target):
 
 def remove_collect_medias(collect):
     # medias are tied to targets
-    for target in collect.targets:
+    for target in collect.targets.all():
         # delete each media
         for attachment in target.list_attachments():
             fpath = os.path.join(target.get_folder_path(),
