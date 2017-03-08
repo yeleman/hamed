@@ -72,7 +72,7 @@ def get_export_fname(kind, collect):
         'json': "{ona_id}.xlsx",
         'xlsx': "{ona_id}.json",
     }
-    return templates.get(kind).format(ona_id=collect.ona_form_id)
+    return templates.get(kind).format(ona_id=collect.ona_form_id())
 
 
 def gen_targets_documents(targets):
