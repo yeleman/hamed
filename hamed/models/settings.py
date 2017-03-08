@@ -20,6 +20,7 @@ class Settings(models.Model):
     ONA_USERNAME = 'ona-username'
     ONA_TOKEN = 'ona-token'
     CERCLE_ID = 'cercle-id'
+    DATAENTRY_USERNAME = 'dataentry-username'
 
     key = models.SlugField(primary_key=True)
     value = models.CharField(max_length=500)
@@ -56,3 +57,7 @@ class Settings(models.Model):
     @classmethod
     def cercle_id(cls):
         return cls.get_value_or_none(cls.CERCLE_ID)
+
+    @classmethod
+    def dataentry_username(cls):
+        return cls.get_value_or_none(cls.DATAENTRY_USERNAME)

@@ -15,6 +15,8 @@ ONA_MEDIA = '/media'
 XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml' \
             '.sheet; charset=binary'
 CSV_MIME = 'text/plain; charset=utf-8'
+DATAENTRY_ROLE = 'dataentry-only'
+READONLY_ROLE = 'readonly-no-download'
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,16 @@ def post(path, payload={}, headers={}, files={}, params={},
          expected_codes=(200, 201), as_json=True, as_bytes=False,
          silent_failure=False):
     return request(method='POST', path=path, payload=payload, params=params,
+                   headers=headers, files=files,
+                   expected_codes=expected_codes,
+                   as_json=as_json, as_bytes=as_bytes,
+                   silent_failure=silent_failure)
+
+
+def patch(path, payload={}, headers={}, files={}, params={},
+          expected_codes=(200, 201), as_json=True, as_bytes=False,
+          silent_failure=False):
+    return request(method='PATCH', path=path, payload=payload, params=params,
                    headers=headers, files=files,
                    expected_codes=expected_codes,
                    as_json=as_json, as_bytes=as_bytes,
@@ -108,13 +120,22 @@ def upload_xlsform(xls_file, silent_failure=False):
                 expected_codes=(201,))
 
 
+def add_role_to_form(form_pk, usernames, role):
+    usernames = ",".join(usernames) \
+        if isinstance(usernames, list) else usernames
+
+    return post(path=get_api_path('/forms/{pk}/share'.format(pk=form_pk)),
+                payload={"usernames": usernames, "role": role},
+                expected_codes=(204,), as_json=False)
+
+
 def get_form_detail(form_pk):
-    return get(get_api_path('/forms/{id}'.format(id=form_pk)))
+    return get(get_api_path('/forms/{pk}'.format(pk=form_pk)))
 
 
 def toggle_downloadable_ona_form(form_pk, downloadable):
     # TODO: move to patch method
-    url = get_url(get_api_path('/forms/{}'.format(form_pk)))
+    url = get_url(get_api_path('/forms/{pk}'.format(pk=form_pk)))
     req = requests.patch(url=url,
                          headers=get_auth_header(),
                          data={'downloadable': downloadable})
@@ -136,12 +157,12 @@ def enable_form(form_pk):
 
 
 def delete_form(form_pk):
-    return delete(get_api_path('/forms/{}'.format(form_pk)),
+    return delete(get_api_path('/forms/{pk}'.format(pk=form_pk)),
                   expected_codes=(204,), as_json=False)
 
 
 def get_form_data(form_pk):
-    return get(get_api_path('/data/{id}'.format(id=form_pk)))
+    return get(get_api_path('/data/{pk}'.format(pk=form_pk)))
 
 
 def get_media_size(filename):

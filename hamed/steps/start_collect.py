@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 from hamed.steps import Task, TaskCollection
 from hamed.exports.xlsx.xlsform import gen_xlsform
 from hamed.ona import upload_xlsform, delete_form
+from hamed.utils import share_form, unshare_form
 
 
 class CreateCollectInstance(Task):
@@ -65,7 +66,21 @@ class UploadXLSForm(Task):
             self.kwargs['collect'].save()
 
 
+class ShareForm(Task):
+
+    def _process(self):
+        ''' add agent user permission to submit to form '''
+        share_form(self.kwargs['collect'].ona_form_pk)
+
+    def _revert(self):
+        ''' remove agent user permission to submit to form '''
+        if self.kwargs.get('collect'):
+            if self.kwargs['collect'].ona_form_pk:
+                unshare_form(self.kwargs['collect'].ona_form_pk)
+
+
 class StartCollectTaskCollection(TaskCollection):
     tasks = [CreateCollectInstance,
              GenerateCollectXLSForm,
-             UploadXLSForm]
+             UploadXLSForm,
+             ShareForm]

@@ -17,8 +17,10 @@ from hamed.exports.pdf.indigence_certificate import \
     gen_indigence_certificate_pdf
 from hamed.exports.pdf.residence_certificate import \
     gen_residence_certificate_pdf
+from hamed.models.settings import Settings
 from hamed.ona import (
-    download_media, download_xlsx_export, download_json_export)
+    download_media, download_xlsx_export, download_json_export,
+    add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
 
 logger = logging.getLogger(__name__)
 
@@ -264,3 +266,15 @@ def open_finder_at(abs_path):
         subprocess.Popen(["open", abs_path])
     else:
         subprocess.Popen(["xdg-open", abs_path])
+
+
+def share_form(form_pk):
+    return add_role_to_form(form_pk,
+                            username=Settings.dataentry_username(),
+                            role=DATAENTRY_ROLE)
+
+
+def unshare_form(form_pk):
+    return add_role_to_form(form_pk,
+                            username=Settings.dataentry_username(),
+                            role=READONLY_ROLE)

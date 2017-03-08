@@ -29,4 +29,12 @@
   },
   "model": "hamed.Settings",
   "pk": 3
+},
+{
+  "fields": {
+  	"key": "dataentry-username",
+    "value": "agent"
+  },
+  "model": "hamed.Settings",
+  "pk": 4
 }]

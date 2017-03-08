@@ -11,7 +11,8 @@ from hamed.exports.xlsx.xlsform import gen_xlsform
 from hamed.ona import (upload_xlsform, delete_form, disable_form, enable_form,
                        get_form_data, upload_csv_media,
                        delete_media, get_media_id)
-from hamed.utils import gen_targets_documents, remove_targets_documents
+from hamed.utils import (gen_targets_documents, remove_targets_documents,
+                         share_form, unshare_form)
 
 
 class DisableONAForm(Task):
@@ -116,6 +117,19 @@ class UploadXLSForm(Task):
             self.kwargs['collect'].save()
 
 
+class ShareForm(Task):
+
+    def _process(self):
+        ''' add agent user permission to submit to form '''
+        share_form(self.kwargs['collect'].ona_scan_form_pk)
+
+    def _revert(self):
+        ''' remove agent user permission to submit to form '''
+        if self.kwargs.get('collect'):
+            if self.kwargs['collect'].ona_scan_form_pk:
+                unshare_form(self.kwargs['collect'].ona_scan_form_pk)
+
+
 class AddItemsetsToONAForm(Task):
     required_inputs = ['collect', 'targets_csv']
     required_outputs = ['uploaded_csv']
@@ -161,5 +175,6 @@ class EndCollectTaskCollection(TaskCollection):
              GenerateItemsetsCSV,
              GenerateScanXLSForm,
              UploadXLSForm,
+             ShareForm,
              AddItemsetsToONAForm,
              MarkCollectAsEnded]
