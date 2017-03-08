@@ -237,4 +237,6 @@ def download_json_export(collect):
 def download_export_file(collect, format_extension):
     url = get_api_path("/data/{pk}.{ext}".format(
         pk=collect.ona_form_pk, ext=format_extension))
-    return get(url, as_bytes=True)
+    data = io.BytesIO(get(url, as_bytes=True), expected_codes=(200,))
+    data.seek(0)
+    return data
