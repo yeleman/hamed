@@ -93,6 +93,7 @@ class MarkCollectAsFinalized(Task):
 class FinalizeCollectTaskCollection(TaskCollection):
     tasks = [DisableONAScanForm,
              DownloadScanData,
+             AddONAScanDataToCollect,
              ExportAllData,
              ExportAllMedias,
              MarkCollectAsFinalized]
