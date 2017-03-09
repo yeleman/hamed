@@ -102,7 +102,7 @@ def gen_indigence_certificate_pdf(target):
         "certificat pour servir et faire valoir ce que de droit."))
     story.append(draw_paragraph("<b>Bamako, le</b> {}".format(date_filter(
         timezone.now())), align="right"))
-    story.append(draw_paragraph("le Maire", align="right"))
+    story.append(draw_paragraph("Le Maire", align="right"))
     story.append(draw_paragraph("<b><u>Ampliations</u></b>"))
     story.append(draw_paragraph("Service du Développement Social ........ 1"))
     story.append(draw_paragraph(

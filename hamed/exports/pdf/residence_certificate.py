@@ -129,7 +129,7 @@ def gen_residence_certificate_pdf(target):
     story.append(
         draw_paragraph("<b>Bamako, le</b> {}".format(
             date_filter(timezone.now())), align="right"))
-    story.append(draw_paragraph("le Maire", align="right"))
+    story.append(draw_paragraph("Le Maire", align="right"))
 
     doc.build(story, onFirstPage=addQRCodeToFrame)
 
