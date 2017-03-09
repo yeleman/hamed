@@ -49,8 +49,8 @@ def gen_residence_certificate_pdf(target):
 
     def draw_paragraph(data, indent=30, align="left"):
         return Paragraph("""<para align={align} leftIndent={indent}
-                         spaceb=2 spaceafter=1>{data}</para>"""
-                         .format(align=align, indent=indent, data=data), n_style)
+                         spaceb=2 spaceafter=1>{data}</para>""".format(
+                            align=align, indent=indent, data=data), n_style)
 
     doc = SimpleDocTemplate(pdf_form, pagesize=A4)
 
@@ -81,7 +81,7 @@ def gen_residence_certificate_pdf(target):
                ["**" * 10, "", "", ""],
                ["CERCLE DE {} ".format(cercle.upper()), "", "", ""],
                ["**" * 10, "", "", ""],
-               ["MAIRIE DE {}".format(commune.upper()), "", "", ""], ]
+               ["COMMUNE DE {}".format(commune.upper()), "", "", ""], ]
     headers_table = Table(headers, rowHeights=12, colWidths=120)
     headers_table.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
                                        ('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
@@ -129,7 +129,7 @@ def gen_residence_certificate_pdf(target):
     story.append(
         draw_paragraph("<b>Bamako, le</b> {}".format(
             date_filter(timezone.now())), align="right"))
-    story.append(draw_paragraph("<b>P/</b> le Maire <b>PO</b>", align="right"))
+    story.append(draw_paragraph("le Maire", align="right"))
 
     doc.build(story, onFirstPage=addQRCodeToFrame)
 

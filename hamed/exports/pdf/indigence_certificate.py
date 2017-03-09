@@ -78,7 +78,7 @@ def gen_indigence_certificate_pdf(target):
                ["**" * 10, "", "", ""],
                ["CERCLE DE {} ".format(cercle.upper()), "", "", ""],
                ["**" * 10, "", "", ""],
-               ["MAIRIE DE {}".format(commune.upper()), "", "", ""], ]
+               ["COMMUNE DE {}".format(commune.upper()), "", "", ""], ]
     headers_table = Table(headers, rowHeights=12, colWidths=120)
     headers_table.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8),
                                        ('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
@@ -88,14 +88,13 @@ def gen_indigence_certificate_pdf(target):
         "CERTIFICAT D'INDIGENCE N° {}".format("_____________/_________")))
     story.append(draw_paragraph(
         """Je soussigné, {non_maire}, maire de la commune de {name_commune}
-           cercle de {name_cercle} certifie que le nommé {name}, {naissance}
-           à {lieu_naissance}, {titre_enquete} de {name_pere} et de {name_mere},
-           domicilié à «{adresse}» <b>est indigent.</b>""".format(
-           non_maire=target.collect.mayor, name_commune=commune, name_cercle=cercle,
-           name=name, naissance=naissance, lieu_naissance=lieu_naissance,
-           titre_enquete="fille " if is_female else "fils ",
-           name_pere=name_pere, name_mere=name_mere, adresse=adresse.lower())))
-
+        cercle de {name_cercle} certifie que le nommé {name}, {naissance}
+        à {lieu_naissance}, {titre_enquete} de {name_pere} et de {name_mere},
+        domicilié à «{adresse}» <b>est indigent.</b>""".format(
+        non_maire=target.collect.mayor, name_commune=commune, name=name,
+        name_cercle=cercle, naissance=naissance, lieu_naissance=lieu_naissance,
+        titre_enquete="fille " if is_female else "fils ", name_pere=name_pere,
+        name_mere=name_mere, adresse=adresse.lower())))
     story.append(draw_paragraph(
         "<b>NB : </b> {}".format("Ce certificat d'indigence est valable pour "
             "une durée de six (6) mois à compter de sa date de signature.")))
@@ -103,14 +102,14 @@ def gen_indigence_certificate_pdf(target):
         "certificat pour servir et faire valoir ce que de droit."))
     story.append(draw_paragraph("<b>Bamako, le</b> {}".format(date_filter(
         timezone.now())), align="right"))
-    story.append(draw_paragraph("<b>P/</b> le Maire <b>PO</b>", align="right"))
+    story.append(draw_paragraph("le Maire", align="right"))
     story.append(draw_paragraph("<b><u>Ampliations</u></b>"))
     story.append(draw_paragraph("Service du Développement Social ........ 1"))
     story.append(draw_paragraph(
         "Intéressé{} ............................................. 1".format(
                                                     "e" if is_female else "")))
     story.append(draw_paragraph(
-        "Chrono et Archives................................ 2"))
+                 "Chrono et Archives................................ 2"))
 
     doc.build(story, onFirstPage=addQRCodeToFrame)
 
