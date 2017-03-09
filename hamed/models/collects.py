@@ -335,8 +335,8 @@ class Collect(models.Model):
             target.dataset['_scan_attachments'] = attachments
             target.save()
 
-        self.nb_medias_scan_form += nb_medias
-        self.medias_size_scan_form += medias_size
+        self.nb_medias_scan_form = nb_medias
+        self.medias_size_scan_form = medias_size
         self.nb_submissions = self.targets.count()
         self.nb_indigents = self.targets.filter(is_indigent=True).count()
         self.nb_non_indigents = self.nb_submissions - self.nb_indigents
