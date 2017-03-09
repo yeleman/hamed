@@ -281,7 +281,7 @@ def gen_social_survey_pdf(target):
                                                     "e" if is_female else "")))
     autres = instance.get('autres', [])
     if autres == []:
-        story.append(draw_paragraph(BLANK))
+        story.append(draw_paragraph("", BLANK))
     else:
         logger.debug("Other")
         for nb, autre in enumerate(autres):
