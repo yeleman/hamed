@@ -29,6 +29,7 @@
 	<th>Village</th>
 	<th>Indigent</th>
 	<th>Médias</th>
+	{% if advanced_mode %}<th class="alert-danger">Mode avancé</th>{% endif %}
 </tr>
 {% endif %}
 {% for target in collect.targets.all %}
@@ -42,10 +43,21 @@
 	<td>{{ target.village|title }}</td>
 	<td>{{ target.is_indigent|yesno:"oui,non,n/c" }}</td>
 	<td>{% include "attachments.html" with target=target %}</td>
+	{% if advanced_mode %}<td><button data-id="{{ target.identifier }}" data-url="{% url 'delete_target' collect.id target.identifier %}" class="delete-target btn btn-danger btn-sm">supprimer {{ target.identifier }}</button></td>{% endif %}
 </tr>
 {% empty %}
 <p>Aucune soumission.</p>
 {% endfor %}
 {% if collect.targets.count %}</table>{% endif %}
 
+{% endblock %}
+
+{% block onJQready %}
+$('button.delete-target').on('click', function () {
+	var identifier = $(this).data('id');
+	var del_url = $(this).data('url');
+	if (confirm("Êtes-vous sûr de vouloir supprimer la cible «" + identifier + "» ?")) {
+		window.location.replace(del_url);
+	}
+});
 {% endblock %}

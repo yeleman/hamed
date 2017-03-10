@@ -31,6 +31,9 @@ urlpatterns = [
         views.collect_drop_data, name='collect_drop_data'),
     url(r'^collect/(?P<collect_id>[0-9]+)/downgrade/?$',
         views.collect_downgrade, name='collect_downgrade'),
+    url(r'^collect/(?P<collect_id>[0-9]+)'
+        r'/delete-target/(?P<target_id>[a-zA-Z0-9]{5})?$',
+        views.delete_target, name='delete_target'),
 
     url(r'^collect/(?P<collect_id>[0-9]+)/export.(?P<format>json|xlsx)$',
         views.exports_proxy, name='collect_exports'),
