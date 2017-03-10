@@ -45,4 +45,12 @@
   },
   "model": "hamed.Settings",
   "pk": 5
+},
+{
+  "fields": {
+  	"key": "advanced-mode",
+    "value": "true"
+  },
+  "model": "hamed.Settings",
+  "pk": 6
 }]

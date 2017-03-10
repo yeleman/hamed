@@ -61,7 +61,8 @@ def collect(request, collect_id):
         'ona_form': get_form_detail(collect.ona_form_pk)
         if collect.ona_form_pk else {},
         'ona_scan_form': get_form_detail(collect.ona_scan_form_pk)
-        if collect.ona_scan_form_pk else {}}
+        if collect.ona_scan_form_pk else {},
+        'advanced_mode': Settings.advanced_mode()}
 
     return render(request, 'collect.html', context)
 
@@ -71,9 +72,41 @@ def collect_data(request, collect_id):
     if collect is None:
         raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
-    context = {'collect': collect}
+    context = {'collect': collect,
+               'advanced_mode': Settings.advanced_mode()}
 
     return render(request, 'collect_data.html', context)
+
+
+def delete_target(request, collect_id, target_id):
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
+    if not Settings.advanced_mode():
+        messages.error(request,
+                       "Impossible de supprimer une cible hors du mode avancé")
+        return redirect('collect_data', collect_id=collect.id)
+
+    target = Target.get_or_none(target_id)
+    if target is None:
+        raise Http404("Aucune cible avec l'ID `{}`".format(target_id))
+
+    if target.collect != collect:
+        raise Http404("La cible «{}» ne fait pas partie de la collecte «{}»"
+                      .format(target, collect))
+
+    try:
+        target.remove_completely(delete_submissions=True)
+    except Exception as exp:
+        logger.exception(exp)
+        messages.error(request, "Impossible de supprimer la cible «{target}»"
+                       ": {exp}".format(target=target, exp=exp))
+    else:
+        messages.success(request, "La cible «{}» a été supprimée."
+                         .format(target))
+
+    return redirect('collect_data', collect_id=collect.id)
 
 
 @require_POST
@@ -248,13 +281,17 @@ def help(request):
 @require_POST
 def collect_downgrade(request, collect_id):
 
-    collect = Collect.get_or_none(collect_id)
-    if collect is None:
-        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
-
     def fail(message):
         messages.error(request, message)
         return JsonResponse({'status': 'error', 'message': message})
+
+    if not Settings.advanced_mode():
+        return fail("Modification de la collecte impossible "
+                    "hors du «mode avancé»")
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     tc = collect.downgrade()
     if tc.reverted:
@@ -270,6 +307,59 @@ def collect_downgrade(request, collect_id):
         return fail("Impossible de modifier l'état de la collecte. "
                     "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
+
+
+@require_POST
+def collect_drop_scan_data(request, collect_id):
+
+    def fail(message):
+        messages.error(request, message)
+        return JsonResponse({'status': 'error', 'message': message})
+
+    if not Settings.advanced_mode():
+        return fail("Suppression des données «scan» impossible "
+                    "hors du «mode avancé»")
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
+    try:
+        collect.reset_scan_form_data(delete_submissions=True)
+        message = "Les données «scan» de la collecte «{}» " \
+                  "ont été supprimées.".format(collect)
+        messages.success(request, message)
+        return JsonResponse({'status': 'success', 'message': message})
+    except Exception as exp:
+        logger.exception(exp)
+        return fail("Impossible de supprimer les données «scan» "
+                    "de la collecte. (exp: {})".format(exp))
+
+
+@require_POST
+def collect_drop_data(request, collect_id):
+
+    def fail(message):
+        messages.error(request, message)
+        return JsonResponse({'status': 'error', 'message': message})
+
+    if not Settings.advanced_mode():
+        return fail("Suppression des données impossible hors du «mode avancé»")
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
+    try:
+        collect.reset_form_data(delete_submissions=True)
+        message = "Les données de la collecte «{}» " \
+                  "ont été supprimées.".format(collect)
+        messages.success(request, message)
+        return JsonResponse({'status': 'success', 'message': message})
+    except Exception as exp:
+        logger.exception(exp)
+        return fail("Impossible de supprimer les données "
+                    "de la collecte. (exp: {})".format(exp))
 
 
 @require_POST

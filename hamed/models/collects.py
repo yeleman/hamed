@@ -100,6 +100,33 @@ class Collect(models.Model):
     active = ActiveCollectManager()
     archived = ArchivedCollectManager()
 
+    def to_dict(self):
+        data = {}
+
+        for dkey in ('started_on', 'ended_on', 'finalized_on', 'uploaded_on'):
+            if getattr(self, dkey):
+                data.update({dkey: getattr(self, dkey).isoformat()})
+
+        for key in ('cercle_id', 'commune_id',
+                    'ona_form_pk', 'ona_scan_form_pk',
+                    'nb_submissions', 'nb_indigents', 'nb_non_indigents',
+                    'nb_medias_form', 'nb_medias_scan_form',
+                    'medias_size_form', 'medias_size_scan_form'):
+            data.update({key: getattr(self, key)})
+
+        data.update({
+            'cercle': self.cercle,
+            'commune': self.commune,
+            'mayor': {
+                'title_code': self.mayor_title,
+                'title': self.verbose_mayor_title,
+                'name': self.mayor_name,
+            },
+            'ona_form_id': self.ona_form_id(),
+            'ona_scan_form_id': self.ona_scan_form_id(),
+        })
+        return data
+
     def name(self):
         return "E.S {commune} {suffix}".format(
             commune=self.commune, suffix=self.suffix)
@@ -305,8 +332,9 @@ class Collect(models.Model):
         self.medias_size_form = medias_size
         self.save()
 
-    def reset_form_data(self):
-        self.targets.all().delete()
+    def reset_form_data(self, delete_submissions=False):
+        for target in self.targets.all():
+            target.remove_completely(delete_submissions=delete_submissions)
         self.nb_submissions = None
         self.nb_medias_form = None
         self.medias_size_form = None
@@ -321,24 +349,23 @@ class Collect(models.Model):
             # find target and mark as indigent
             target = Target.get_or_none(submission.get('ident'))
             assert target is not None
-            target.is_indigent = True
 
             # include new attachments to counters
             attachments = submission.get('_attachments', [])
             for media in attachments:
                 media['filesize'] = get_media_size(media.get('filename', ''))
+            submission['_attachments'] = attachments
+
+            # update target
+            target.update_with_scan_submission(submission)
 
             nb_medias += len(attachments)
             medias_size += sum([m['filesize'] for m in attachments])
 
-            # add new attachments to Target payload
-            target.dataset['_scan_attachments'] = attachments
-            target.save()
-
         self.nb_medias_scan_form = nb_medias
         self.medias_size_scan_form = medias_size
         self.nb_submissions = self.targets.count()
-        self.nb_indigents = self.targets.filter(is_indigent=True).count()
+        self.nb_indigents = self.indigents.count()
         self.nb_non_indigents = self.nb_submissions - self.nb_indigents
         self.save()
 
@@ -347,13 +374,10 @@ class Collect(models.Model):
             target.is_indigent = False
             target.save()
 
-    def reset_scan_form_data(self):
+    def reset_scan_form_data(self, delete_submissions=False):
         # remove indigent
-        for target in self.targets.filter(is_indigent=True):
-            target.is_indigent = None
-            if '_scan_attachments' in target.dataset:
-                del(target.dataset['_scan_attachments'])
-            target.save()
+        for target in self.indigents.all():
+            target.delete_scan_data(delete_submission=delete_submissions)
 
         self.nb_medias_scan_form = None
         self.medias_size_scan_form = None
@@ -385,8 +409,16 @@ class Collect(models.Model):
         return self.nb_submissions * 3 if self.nb_submissions else None
 
     def export_data(self):
-        return [t.export_data() for t in self.targets.all()]
+        data = self.to_dict().copy()
+        data.update({
+            'targets': [t.export_data() for t in self.targets.all()]
+        })
+        return data
 
     def mark_uploaded(self, server_response):
         self.uploaded_on = timezone.now()
         self.save()
+
+    @property
+    def indigents(self):
+        return Target.indigents.filter(collect=self)

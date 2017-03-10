@@ -38,6 +38,7 @@ class DownloadScanData(Task):
     def _revert(self):
         ''' release collected data for form '''
         self.release_from_output('data')
+        # delete ONA submissions on ONA
 
 
 class AddONAScanDataToCollect(Task):

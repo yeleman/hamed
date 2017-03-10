@@ -14,8 +14,21 @@ from jsonfield.fields import JSONField
 
 from hamed.identifiers import full_random_id
 from hamed.utils import get_attachment, PERSONAL_FILES
+from hamed.ona import delete_submission
 
 logger = logging.getLogger(__name__)
+
+
+class IndigentManager(models.Manager):
+    def get_queryset(self):
+        return super(IndigentManager, self).get_queryset() \
+            .filter(is_indigent=True)
+
+
+class NonIndigentManager(models.Manager):
+    def get_queryset(self):
+        return super(NonIndigentManager, self).get_queryset() \
+            .filter(is_indigent=False)
 
 
 class Target(models.Model):
@@ -45,7 +58,12 @@ class Target(models.Model):
     commune = models.CharField(max_length=100)
     village = models.CharField(max_length=100)
     is_indigent = models.NullBooleanField(blank=True, null=True)
-    dataset = JSONField(default=dict, blank=True)
+    form_dataset = JSONField(default=dict, blank=True)
+    scan_form_dataset = JSONField(default=dict, blank=True)
+
+    objects = models.Manager()
+    indigents = IndigentManager()
+    nonindigents = NonIndigentManager()
 
     def fname(self):
         return "{ident}-{last} {first}".format(
@@ -59,6 +77,18 @@ class Target(models.Model):
     @property
     def verbose_sex(self):
         return self.SEXES.get(self.gender)
+
+    @property
+    def dataset(self):
+        dataset = self.form_dataset.copy()
+        for key, value in self.scan_form_dataset.items():
+            if key not in dataset:
+                dataset.update({key: value})
+            elif key == '_attachments':
+                dataset[key] += value
+            else:
+                dataset.update({"_scan:{}".format(key): value})
+        return dataset
 
     def __str__(self):
         return "{ident}.{name}".format(ident=self.identifier, name=self.name())
@@ -97,9 +127,14 @@ class Target(models.Model):
             'commune': submission.get('localisation-enquete/lieu_commune'),
             'village': submission.get('localisation-enquete/lieu_village')
             or submission.get('localisation-enquete/lieu_village_autre'),
-            'dataset': submission,
+            'form_dataset': submission,
         }
         return cls.objects.create(**payload)
+
+    def update_with_scan_submission(self, submission):
+        self.scan_form_dataset = submission
+        self.is_indigent = bool(submission)
+        self.save()
 
     @classmethod
     def get_or_none(cls, identifier):
@@ -141,7 +176,7 @@ class Target(models.Model):
                 'short': "SIG",
                 'long': "Signature",
             },
-            'certifcat-indigence': {
+            'certificat-indigence': {
                 'slug': 'certificat-indigence',
                 'short': "CERT-IND",
                 'long': "Certificat d'indigence",
@@ -194,9 +229,6 @@ class Target(models.Model):
         for key, label in labels.items():
             attachment = get_attachment(self.dataset, self.dataset.get(key))
             if attachment is None:
-                attachment = get_attachment(
-                    self.dataset, self.dataset.get(key),
-                    main_key='_scan_attachments')
                 continue
             attachment['labels'] = label
             attachment['hamed_url'] = label['slug']
@@ -290,3 +322,36 @@ class Target(models.Model):
         data.update({'_hamed_attachments': self.attachments()})
         return data
 
+    @property
+    def ona_submission_id(self):
+        return self.form_dataset.get('_id')
+
+    @property
+    def ona_scan_submission_id(self):
+        return self.scan_form_dataset.get('_id')
+
+    def delete_ona_scan_submission(self):
+        if self.collect.ona_scan_form_pk and self.ona_scan_submission_id:
+            delete_submission(form_pk=self.collect.ona_scan_form_pk,
+                              submission_id=self.ona_scan_submission_id)
+
+    def delete_ona_submission(self):
+        if self.collect.ona_form_pk and self.ona_submission_id:
+            delete_submission(form_pk=self.collect.ona_form_pk,
+                              submission_id=self.ona_submission_id)
+
+    def delete_ona_submissions(self):
+        self.delete_ona_scan_submission()
+        self.delete_ona_submission()
+
+    def delete_scan_data(self, delete_submission=False):
+        if delete_submission:
+            self.delete_ona_scan_submission()
+        self.scan_form_dataset = {}
+        self.is_indigent = None
+        self.save()
+
+    def remove_completely(self, delete_submissions=False):
+        if delete_submissions:
+            self.delete_ona_submissions()
+        self.delete()
