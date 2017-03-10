@@ -84,8 +84,8 @@ def gen_social_survey_pdf(target):
          get_int(revenu, 'ressources/autres_revenus/montant-revenu'))
         for revenu in instance.get('ressources/autres_revenus', [])]
     total_autres_revenus = get_int(instance, 'ressources/total_autres_revenus')
-    autres_revenus_f = concat(
-        ["[{} : {}]".format(get_label_for("source-revenu", source_revenu), montant_revenu)
+    autres_revenus_f = concat(["[{} : {}]".format(get_label_for(
+        "source-revenu", source_revenu), montant_revenu)
          for source_revenu, montant_revenu in autres_revenus], sep=". ")
     # charges
     loyer = get_int(instance, 'charges/loyer')
@@ -104,6 +104,7 @@ def gen_social_survey_pdf(target):
     # habitat
     type_habitat = get_other(instance, 'habitat/type')
     materiau_habitat = get_other(instance, 'habitat/materiau')
+    conditions_hygiene = get_other(instance, 'habitat/conditions_hygiene')
 
     # antecedents
     antecedents_personnels = instance.get('antecedents/personnels')
@@ -119,7 +120,8 @@ def gen_social_survey_pdf(target):
     situation_actuelle = instance.get('situation-actuelle', BLANK)
     diagnostic = instance.get('diagnostic', BLANK)
     diagnostic_details = instance.get('diagnostic-details', BLANK)
-    recommande_assistance, recommande_assistance_text = get_bool(instance, 'observation')
+    recommande_assistance, recommande_assistance_text = get_bool(
+        instance, 'observation')
 
     def addQRCodeToFrame(canvas, doc):
         text = "ID: {}".format(target.identifier)
@@ -159,8 +161,9 @@ def gen_social_survey_pdf(target):
     logger.info("Headers")
     headers = [["MINISTÈRE DE LA SOLIDARITÉ", "", "",  "REPUBLIQUE DU MALI"],
                ["DE L’ACTION HUMANITAIRE", "", "", "Un Peuple Un But Une Foi"],
-               ["ET DE LA RECONSTRUCTION DU NORD", "", "", ""],
-               ["AGENCE NATIONALE D’ASSISTANCE MEDICALE (ANAM)", "", "", ""]]
+               # ["ET DE LA RECONSTRUCTION DU NORD", "", "", ""],
+               # ["AGENCE NATIONALE D’ASSISTANCE MEDICALE (ANAM)", "", "", ""]
+               ]
     headers_t = Table(headers, rowHeights=12, colWidths=120)
     headers_t.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 8), ]))
 
@@ -276,7 +279,7 @@ def gen_social_survey_pdf(target):
                     "handicapé : {}".format(nb_enfant_handicap),
                     "à charge : {}".format(nb_enfants_acharge)])))
     # autres
-    story.append(draw_paragraph_sub_title_h2(
+    story.append(draw_paragraph_sub_title_h3(
         "Autres persionnes à la charge de l’enquêté{}".format(
                                                     "e" if is_female else "")))
     autres = instance.get('autres', [])
@@ -320,14 +323,17 @@ def gen_social_survey_pdf(target):
     story.append(draw_paragraph("Autres Charges", autres_charges_f))
     story.append(draw_paragraph_sub_title_h3("Habitat"))
     story.append(draw_paragraph("", concat([
-        "Type d’habitat : {}".format(get_label_for("type",type_habitat)),
-        "Principal matériau des murs du logement : {}".format(
-            get_label_for("materiau",materiau_habitat))])))
-    story.append(draw_paragraph_sub_title_h2("Exposé détaillé des faits"))
+        "<u>Type d’habitat</u> : {}".format(get_label_for("type",type_habitat)),
+        "<u>Principal matériau des murs du logement</u> : {}".format(
+            get_label_for("materiau",materiau_habitat)),
+        "<u>Conditions d'hygiène</u> : {}".format(conditions_hygiene)
+        ])))
+    # story.append(draw_paragraph("Conditions d'hygiène", conditions_hygiene))
+    story.append(draw_paragraph_sub_title_h2("EXPOSÉ DÉTAILLÉ DES FAITS"))
     # antecedents
     logger.debug("Antecedents")
-    story.append(draw_paragraph("Antécédents personnels", concat([
-        get_label_for("personnels", ap) for ap in antecedents_personnels.split()])))
+    story.append(draw_paragraph("Antécédents personnels", concat(
+        [get_label_for("personnels", ap) for ap in antecedents_personnels.split()])))
     story.append(draw_paragraph("Détails antécédents personnels",
         antecedents_personnels_details))
     story.append(draw_paragraph("Antécédents familiaux",
