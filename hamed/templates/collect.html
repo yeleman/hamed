@@ -54,30 +54,20 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 <dd>{{ ona_scan_form.num_of_submissions|default:"n/a" }}</dd>
 
 <dt>Transmission ANAM</dt>
-<dd>{{ collect.uploaded_on }}</dd>
-
-<dt>Changement statut</dt>
-<dd><button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#status-change-modal"><span class="glyphicon glyphicon-alert"></span> modifier la collecte</button></dd>
+<dd>{{ collect.uploaded_on|default:"n/a" }}</dd>
 </dl>
-<div id="status-change-modal" class="modal fade" tabindex="-1" role="dialog">
-	<div class="modal-dialog modal-sm" role="document">
-		<div class="modal-content">
-			<div class="modal-header alert-danger">
-		      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-		      <h4 class="modal-title">Modification de la collecte</h4>
-		      </div>
-		      <div class="modal-body alert-danger">
-		      	<p class=""><strong><span class="glyphicon glyphicon-alert"></span> Attention !</strong> Opération <strong>irréversible</strong>.</p>
-		      	<p>Dans le cas où vous auriez <em>cloturé</em> ou <em>finalisé</em> une collecte par erreur, cette option vous permet de revenir en arrière.</p>
-		      	<p>Toutes les données issues de l'étape suivante seront définitivement effacée.</p>
-		      	<p>À n'utiliser que si vous savez ce que vous faites.</p>
 
-		      	<h4>Retourner au statut:</h4>
-		      	<button id="downgrade-btn" class="btn btn-danger">{{ collect.previous_verbose_status }}</button>
-			  </div>
-		</div>
-    </div>
+{% if advanced_mode %}
+<div class="alert alert-danger">
+<h4><span class="glyphicon glyphicon-exclamation-sign"></span> Mode avancé</h4>
+<p>Attention, les actions suivantes <strong>détruisent vos données</strong>.</p>
+<p><button id="downgrade-btn" class="btn btn-sm btn-default btn-danger">Modifier le statut de la collecte</button> pour revenir à un état antérieur.</p>
+<p><button id="drop_scan_data-btn" class="btn btn-sm btn-default btn-danger">Vider les données «scan»</button> pour supprimer toutes les soumissions de certificats.</p>
+<p><button id="drop_data-btn" class="btn btn-sm btn-default btn-danger">Vider toutes les données</button> pour supprimer toutes les soumissions (enquête et scans)</p>
+</ul>
 </div>
+
+{% endif %}
 
 <hr />
 {% if collect.get_next_step %}
@@ -182,12 +172,32 @@ $('button.action-trigger').on('click', function(e) {
 });
 
 $('#downgrade-btn').on('click', function(e) {
-	postWithLoading(
-		"{% url 'collect_downgrade' collect.id %}",
-		"Vers… {{ collect.previous_verbose_status }}",
-		false, function () {
-			{% if not collect.has_ended %}window.location.replace("{% url 'home' %}");{% else %}location.reload();{% endif %}
-		});
+	if (confirm("Etes vous sûr de vouloir changer de statut pour: {{ collect.previous_verbose_status }}")) {
+		postWithLoading(
+			"{% url 'collect_downgrade' collect.id %}",
+			"Vers… {{ collect.previous_verbose_status }}",
+			false, function () {
+				{% if not collect.has_ended %}window.location.replace("{% url 'home' %}");{% else %}location.reload();{% endif %}
+			});
+	}
+});
+
+$('#drop_scan_data-btn').on('click', function(e) {
+	if (confirm("Etes vous sûr de vouloir supprimer les données «scan» ?")) {
+		postWithLoading(
+			"{% url 'collect_drop_scan_data' collect.id %}",
+			"Suppression des données «scan»",
+			true);
+	}
+});
+
+$('#drop_data-btn').on('click', function(e) {
+	if (confirm("Etes vous sûr de vouloir supprimer les données ?")) {
+		postWithLoading(
+			"{% url 'collect_drop_data' collect.id %}",
+			"Suppression des données",
+			true);
+	}
 });
 
 

@@ -238,3 +238,13 @@ def download_export_file(collect, format_extension):
     url = get_api_path("/data/{pk}.{ext}".format(
         pk=collect.ona_form_pk, ext=format_extension))
     return get(url, as_bytes=True)
+
+
+def delete_submission(form_pk, submission_id):
+    return delete(
+        params={"force": "true"},
+        path=get_api_path("/data/{pk}/{id}".format(
+            pk=form_pk, id=submission_id)),
+        expected_codes=(204,),
+        as_json=False
+    )

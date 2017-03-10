@@ -22,6 +22,7 @@ class Settings(models.Model):
     CERCLE_ID = 'cercle-id'
     DATAENTRY_USERNAME = 'dataentry-username'
     UPLOAD_SERVER = 'upload-server'
+    ADVANCED_MODE = 'advanced-mode'
 
     key = models.SlugField(primary_key=True)
     value = models.CharField(max_length=500)
@@ -66,3 +67,8 @@ class Settings(models.Model):
     @classmethod
     def upload_server(cls):
         return cls.get_value_or_none(cls.UPLOAD_SERVER)
+
+    @classmethod
+    def advanced_mode(cls):
+        val = cls.get_value_or_none(cls.ADVANCED_MODE)
+        return False if not val else val.lower() == "true"

@@ -26,11 +26,17 @@ class ONAAPIError(Exception):
 
     @classmethod
     def from_request(cls, request):
+        logger.debug(request.text)
         try:
             response = request.json()
             assert isinstance(response, dict)
         except:
             response = {}
+
+        # ONA error with message
+        if 'detail' in response.keys():
+            return cls(http_code=request.status_code,
+                       message=response.get('detail'))
 
         # unexpected answer (probably empty)
         if not len([k for k in ('code', 'error', 'requestError')
@@ -38,14 +44,6 @@ class ONAAPIError(Exception):
             return cls.generic_http(request.status_code)
 
         data = {"description": request.text}
-        # # regular API error syntax
-        # if "code" in response.keys():
-        #     data = _standard()
-        # elif "requestError" in response.keys():
-        #     data = _requestError()
-        # # OAuth error syntax
-        # else:
-        #     data = _oauth()
 
         return cls(http_code=request.status_code, **data)
 
@@ -55,11 +53,11 @@ class ONAAPIError(Exception):
 
     def to_text(self):
         code = " {code}".format(code=self.code) if self.code else ""
-        text = "HTTP{http}{code}. {msg}: {desc}".format(
+        text = "HTTP{http}{code}. {msg}{desc}".format(
             http=self.http_code,
             code=code,
             msg=self.message,
-            desc=self.description)
+            desc=": {}".format(self.description) if self.description else "")
         return text
 
     def __str__(self):

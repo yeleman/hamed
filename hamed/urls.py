@@ -23,8 +23,15 @@ urlpatterns = [
         name='finalize_collect'),
     url(r'attachment/(?P<fname>[a-zA-Z0-9\-\_\.]+)', views.attachment_proxy,
         name='attachment'),
+
+    # advanced actions
+    url(r'^collect/(?P<collect_id>[0-9]+)/drop_scan_data/?$',
+        views.collect_drop_scan_data, name='collect_drop_scan_data'),
+    url(r'^collect/(?P<collect_id>[0-9]+)/drop_data/?$',
+        views.collect_drop_data, name='collect_drop_data'),
     url(r'^collect/(?P<collect_id>[0-9]+)/downgrade/?$',
         views.collect_downgrade, name='collect_downgrade'),
+
     url(r'^collect/(?P<collect_id>[0-9]+)/export.(?P<format>json|xlsx)$',
         views.exports_proxy, name='collect_exports'),
     url(r'^collect/(?P<collect_id>[0-9]+)/upload/?$',
