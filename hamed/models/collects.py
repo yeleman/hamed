@@ -100,6 +100,33 @@ class Collect(models.Model):
     active = ActiveCollectManager()
     archived = ArchivedCollectManager()
 
+    def to_dict(self):
+        data = {}
+
+        for dkey in ('started_on', 'ended_on', 'finalized_on', 'uploaded_on'):
+            if getattr(self, dkey):
+                data.update({dkey: getattr(self, dkey).isoformat()})
+
+        for key in ('cercle_id', 'commune_id',
+                    'ona_form_pk', 'ona_scan_form_pk',
+                    'nb_submissions', 'nb_indigents', 'nb_non_indigents',
+                    'nb_medias_form', 'nb_medias_scan_form',
+                    'medias_size_form', 'medias_size_scan_form'):
+            data.update({key: getattr(self, key)})
+
+        data.update({
+            'cercle': self.cercle,
+            'commune': self.commune,
+            'mayor': {
+                'title_code': self.mayor_title,
+                'title': self.verbose_mayor_title,
+                'name': self.mayor_name,
+            },
+            'ona_form_id': self.ona_form_id(),
+            'ona_scan_form_id': self.ona_scan_form_id(),
+        })
+        return data
+
     def name(self):
         return "E.S {commune} {suffix}".format(
             commune=self.commune, suffix=self.suffix)
@@ -382,7 +409,11 @@ class Collect(models.Model):
         return self.nb_submissions * 3 if self.nb_submissions else None
 
     def export_data(self):
-        return [t.export_data() for t in self.targets.all()]
+        data = self.to_dict().copy()
+        data.update({
+            'targets': [t.export_data() for t in self.targets.all()]
+        })
+        return data
 
     def mark_uploaded(self, server_response):
         self.uploaded_on = timezone.now()
