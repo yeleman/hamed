@@ -28,6 +28,7 @@ class ONAAPIError(Exception):
     def from_request(cls, request):
         try:
             response = request.json()
+            assert isinstance(response, dict)
         except:
             response = {}
 
