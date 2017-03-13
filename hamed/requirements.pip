@@ -10,3 +10,4 @@ Path.py==10.1
 pyxform==0.9.24
 humanfriendly==2.4
 sh==1.12.10
+SimpleWebSocketServer==0.1.0
