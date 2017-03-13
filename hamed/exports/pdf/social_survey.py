@@ -73,7 +73,7 @@ def gen_social_survey_pdf(target):
     nb_enfants = get_int(instance, 'nb_enfants', 0)
     nb_enfants_handicapes = get_int(instance, 'nb_enfants_handicapes', 0)
     nb_enfants_acharge = get_int(instance, 'nb_enfants_acharge', 0)
-
+    nb_autres_personnes =  get_int(instance, 'nb_autres_personnes', 0)
     # ressources
     salaire = get_int(instance, 'ressources/salaire')
     pension = get_int(instance, 'ressources/pension')
@@ -118,6 +118,7 @@ def gen_social_survey_pdf(target):
         'antecedents/sociaux-details', BLANK)
 
     situation_actuelle = instance.get('situation-actuelle', BLANK)
+    situation_actuelle_details = instance.get('situation-actuelle-details', BLANK)
     diagnostic = instance.get('diagnostic', BLANK)
     diagnostic_details = instance.get('diagnostic-details', BLANK)
     recommande_assistance, recommande_assistance_text = get_bool(
@@ -235,9 +236,8 @@ def gen_social_survey_pdf(target):
                 ["{} {}".format(style_label("Père"), name_pere_epouse),
                  "{} {}".format(style_label("Mère"), name_mere_epouse)]), 10))
     # enfants
-    story.append(draw_paragraph_sub_title_h3(
-        "Situation des enfants ({})".format("SC : Scolarisé?, HD : Handicapé?,"
-            " AC : À charge ?, AP : Autre parent")))
+    story.append(draw_paragraph_sub_title_h3("Situation des enfants (SC : "
+        "Scolarisé?, HD : Handicapé?, AC : À charge ?, AP : Autre parent)"))
     logger.debug("Child")
     enfants = instance.get('enfants', [])
     if enfants == []:
@@ -301,6 +301,8 @@ def gen_social_survey_pdf(target):
                 "à {lieu}".format(lieu=lieu_naissance_autre),
                 get_label_for("autre_parente", autre_parente),
                 get_label_for("autre_profession", autre_profession)])), 10))
+
+    story.append(draw_paragraph("Nombre de personnes à charge", nb_autres_personnes))
     # ressources
     logger.debug("Ressources")
     story.append(draw_paragraph_sub_title_h2(
@@ -346,6 +348,7 @@ def gen_social_survey_pdf(target):
         antecedents_sociaux_details))
     story.append(draw_paragraph("Situation actuelle", concat([get_label_for(
         "situation-actuelle", sa) for sa in situation_actuelle.split()])))
+    story.append(draw_paragraph("Situation actuelle details", situation_actuelle_details))
     story.append(draw_paragraph("Diagnostic",
         get_label_for("diagnostic", diagnostic)))
     story.append(draw_paragraph("Diagnostic details", diagnostic_details))
