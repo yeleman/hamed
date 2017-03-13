@@ -12,6 +12,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django import forms
+from django.conf import settings
 
 from hamed.models.collects import Collect
 from hamed.models.targets import Target
@@ -81,6 +82,9 @@ def collect(request, collect_id):
             disk_name = "Plusieurs disques USB branchés"
 
         context.update({
+            'WS_SERVER': "{domain}:{port}".format(
+                domain=settings.ALLOWED_HOSTS[0],
+                port=settings.WEBSOCKET_SERVER_PORT),
             'disk': disk,
             'disk_name': disk_name
         })
