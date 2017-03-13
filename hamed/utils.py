@@ -329,8 +329,8 @@ def copy_tree(src, dst, feedback=None):
 def get_us_env():
     env = os.environ.copy()
     for k, v in env.items():
-        if v == 'fr_FR.UTF8':
-            env[k] = 'en_US.UTF8'
+        if v == 'fr_FR.UTF-8':
+            env[k] = 'en_US.UTF-8'
     return env
 
 
