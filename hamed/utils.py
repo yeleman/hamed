@@ -343,7 +343,7 @@ def parse_parted_info(device_path):
         else:
             raise NotImplemented("USB exports is Linux-only")
 
-    pcmd = sh.contrib.sudo.parted("-s", "-m", device_path, "print",
+    pcmd = sh.sudo.parted("-s", "-m", device_path, "print",
                                   _env=get_us_env())
     assert pcmd.exit_code == 0
     line = str(pcmd).splitlines()[1]
@@ -409,7 +409,7 @@ def unmount_device(device_path):
                   for fname in os.listdir(dev_root)
                   if fname.startswith(dev_name) and fname != dev_name]
 
-    with sh.contrib.sudo:
+    with sh.sudo:
         for device_partition in partitions:
             logger.debug("unmounting {}".format(device_partition))
             try:
@@ -434,7 +434,7 @@ def prepare_disk(device_path):
 
     us_environ = get_us_env()
 
-    with sh.contrib.sudo:
+    with sh.sudo:
         logger.debug("resetting partition table for {}".format(device_path))
         sh.parted("-s", "-a", "optimal",
                   device_path,
