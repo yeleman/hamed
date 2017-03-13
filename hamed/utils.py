@@ -326,6 +326,14 @@ def copy_tree(src, dst, feedback=None):
     shutil.copytree(src=src, dst=dst, copy_function=_copyfile)
 
 
+def get_us_env():
+    env = os.environ.copy()
+    for k, v in env:
+        if v == 'fr_FR.UTF8':
+            env[k] = 'en_US.UTF8'
+    return env
+
+
 def parse_parted_info(device_path):
     if not sys.platform.startswith('linux'):
         if settings.DEBUG:
@@ -333,7 +341,8 @@ def parse_parted_info(device_path):
         else:
             raise NotImplemented("USB exports is Linux-only")
 
-    pcmd = sh.contrib.sudo.parted("-m", device_path, "print")
+    pcmd = sh.contrib.sudo.parted("-s", "-m", device_path, "print",
+                                  _env=get_us_env())
     assert pcmd.exit_code == 0
     line = str(pcmd).splitlines()[1]
     path, size, driver, sector, block, mbr, name, _ = line.split(":")
@@ -421,16 +430,20 @@ def prepare_disk(device_path):
     logger.debug("unmounting {}".format(device_path))
     unmount_device(device_path)
 
+    us_environ = get_us_env()
+
     with sh.contrib.sudo:
         logger.debug("resetting partition table for {}".format(device_path))
         sh.parted("-s", "-a", "optimal",
                   device_path,
                   "--",
                   "mklabel",  "msdos",
-                  "mkpart", "primary", "fat32", "64s", "-1s")
+                  "mkpart", "primary", "fat32", "64s", "-1s",
+                  _env=us_environ)
 
         logger.debug("formatting {}".format(partition_path))
-        sh.mkfs("-t", "vfat", "-F", "32", "-n", "SLDSES", partition_path)
+        sh.mkfs("-t", "vfat", "-F", "32", "-n", "SLDSES", partition_path,
+                _env=us_environ)
 
         logger.debug("mounting {} to {}".format(partition_path, mount_point))
         sh.mount(partition_path, mount_point)
