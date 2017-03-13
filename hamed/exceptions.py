@@ -62,3 +62,12 @@ class ONAAPIError(Exception):
     def __str__(self):
         return "<{cls} {text}>".format(cls=self.__class__.__name__,
                                        text=self.to_text())
+
+
+class MultipleUSBDisksPlugged(Exception):
+    pass
+
+
+class NoUSBDiskPlugged(Exception):
+    pass
+

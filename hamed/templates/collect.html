@@ -79,7 +79,6 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
   <div class="modal-dialog modal-sm" role="document">
     <div class="modal-content">
       <div class="modal-header">
-      <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button> -->
       <h4 class="modal-title"></h4>
       </div>
       <div class="modal-body">
@@ -94,6 +93,26 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
   </div>
 </div>
 
+<div id="usb-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+      <h4 class="modal-title">Export USB des médias</h4>
+      </div>
+      <div class="modal-body">
+      	<p id="feedback" class="alert">Veuillez patienter…</p>
+      	<div class="progress">
+		  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+		    <span class="sr-only">Veuillez patienter</span>
+		  </div>
+		</div>
+		<button type="button" class="btn btn-primary" data-dismiss="modal" aria-label="Close">Fermer</button>
+		</div>
+    </div>
+  </div>
+</div>
+
+
 {% if collect.has_ended  and collect.nb_submissions %}
 <h2>Impression des documents</h2>
 <p><button id="open-folder" class="btn btn-default"><span class="glyphicon glyphicon-print"></span> Voir les PDF à imprimer</button></p>
@@ -107,7 +126,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 <p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="{% url 'collect_exports' collect.id 'json' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
 
 <h3>Fichiers médias</h3>
-<p><button id="export-usb" class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé</button></p>
+<p><button id="export-usb" {% if not disk %}disabled="disabled"{% endif %} class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé <strong><span class="alert-{% if disk %}info{% else %}danger{% endif %}">_{{ disk_name }}_</span></button></p>
 {% endif %}
 
 {% endblock %}
@@ -201,9 +220,105 @@ $('#drop_data-btn').on('click', function(e) {
 });
 
 
+$('#export-usb').on('click', function () {
+	$('#usb-modal').modal({backdrop: "static", "keybord": false, show: true});
+	var websocket;
+
+	function doConnect(url) {
+		websocket = new WebSocket(url);
+		websocket.onopen = function(evt) { onOpen(evt) };
+		websocket.onclose = function(evt) { onClose(evt) };
+		websocket.onmessage = function(evt) { onMessage(evt) };
+		websocket.onerror = function(evt) { onError(evt) };
+	}
+
+	function onOpen(evt) {
+		writeToScreen("connected\n");
+		// send a start request
+		sendAction("start", {{ collect.id }});
+	}
+
+	function onClose(evt) {
+		writeToScreen("disconnected\n");
+	}
+
+	function onMessage(evt) {
+		try {
+			var data = JSON.parse(evt.data);
+		} catch(e) {
+			console.error("Unable to parse data");
+			console.log(evt.data);
+			var data = {};
+		}
+		try {status = data.status; } catch(e) { status = 'failed'; }
+		try {progress = data.progress; } catch(e) { progress = 0; }
+		try {message = data.message; } catch (e) { message = ""; }
+		console.log("message: " + message);
+		console.log(evt.data);
+		console.log(data);
+		
+		// update progress bar
+		$('#usb-modal .progress-bar').attr('aria-valuenow', progress);
+		$('#usb-modal .progress-bar').css('width', progress + '%');
+
+		// update text message
+		var cssName;
+		switch (status) {
+			case "failed":
+				cssName = 'danger';
+				break;
+			case "success":
+				cssName = 'success';
+				break;
+			default:
+			case "in-progress":
+				cssName = 'default';
+				break;
+		}
+		
+		// apply style based on feedback
+		$('#usb-modal #feedback')
+			.removeClass("alert-danger alert-info alert-success alert-warning")
+			.addClass("alert-" + cssName)
+		$('#usb-modal #feedback').text(message);
+
+		if (status != 'in-progress') {
+			$('#usb-modal .progress-bar').removeClass("active");
+		}
+
+		writeToScreen("response: " + evt.data + '\n');
+	}
+
+	function onError(evt) {
+		writeToScreen('error: ' + evt.data + '\n');
+		websocket.close();
+	}
+
+	function doSend(message) {
+		writeToScreen("sent: " + message + '\n'); 
+		websocket.send(message);
+	}
+
+	function writeToScreen(message) {
+		console.log(message);
+	}
+
+	function doDisconnect() {
+		websocket.close();
+	}
+
+	function sendAction(action, collect_id) {
+		doSend(JSON.stringify({action: "start", collect_id: collect_id}));
+	}
+	
+	// connect to WS
+	doConnect("ws://localhost:8888");
+});
+
+
 $('#start-usb').on('click', function () {
 	// connect to WebSocket
-	doConnect("ws://localhost:8888");
+	
 });
 
 $('#upload-anam').on('click', function () {

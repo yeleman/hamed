@@ -9,10 +9,16 @@ import os
 import platform
 import subprocess
 import json
+import shutil
+import sys
+import tempfile
 
+import sh
+import humanfriendly
 import requests
 from path import Path as P
 from django.db.models import QuerySet
+from django.conf import settings
 
 from hamed.exports.pdf.social_survey import gen_social_survey_pdf
 from hamed.exports.pdf.indigence_certificate import \
@@ -23,6 +29,7 @@ from hamed.models.settings import Settings
 from hamed.ona import (download_media, download_xlsx_export,
                        download_json_export, XLSX_MIME,
                        add_role_to_form, DATAENTRY_ROLE, READONLY_ROLE)
+from hamed.exceptions import MultipleUSBDisksPlugged, NoUSBDiskPlugged
 
 logger = logging.getLogger(__name__)
 
@@ -303,3 +310,129 @@ def upload_export_data(collect):
     assert req.json()['status'] == 'success'
     collect.mark_uploaded(req.json())
     return req.json()
+
+
+def count_files(folder):
+    return sum([len(list(filter(lambda x: not x.startswith('.'), files)))
+               for root, _, files in os.walk(folder)])
+
+
+def copy_tree(src, dst, feedback=None):
+    def _copyfile(src, dst):
+        if feedback is not None:
+            feedback.tick(filename=os.path.basename(src))
+        return shutil.copy2(src, dst)
+
+    shutil.copytree(src=src, dst=dst, copy_function=_copyfile)
+
+
+def parse_parted_info(device_path):
+    if not sys.platform.startswith('linux'):
+        if settings.DEBUG:
+            return ('/dev/sdd', '32.0GB', 32000000000, 'msdos', "Virtual USB")
+        else:
+            raise NotImplemented("USB exports is Linux-only")
+
+    pcmd = sh.contrib.sudo.parted("-m", device_path, "print")
+    assert pcmd.exit_code == 0
+    line = str(pcmd).splitlines()[1]
+    path, size, driver, sector, block, mbr, name, _ = line.split(":")
+    sizeInBytes = humanfriendly.parse_size(size)
+    return (path, size, sizeInBytes, mbr, name)
+
+
+def find_export_disk():
+    if not sys.platform.startswith('linux'):
+        if settings.DEBUG:
+            return '/dev/sdd'
+        else:
+            raise NotImplemented("USB exports is Linux-only")
+
+    max_size = 40 * 1e+9
+
+    # list devices (usb only)
+    disks = []
+    basedir = '/dev/disk/by-path/'
+    if P(basedir).exists():
+        for fname in os.listdir(basedir):
+            # USB-only, whole disks only
+            if 'usb' in fname and 'part' not in fname:
+                path = os.path.join(basedir, fname)
+                link = os.readlink(path)
+                disks.append(
+                    os.path.normpath(
+                        os.path.join(os.path.dirname(path), link)))
+
+    # check size and exclude anything > 40GB
+    for disk in set(disks):
+        # device = parted.getDevice(disk)
+        device_info = parse_parted_info(disk)
+        sizeInBytes = device_info[2]
+        if sizeInBytes > max_size:
+            disks.remove(disk)
+
+    # assert only one remaining
+    try:
+        assert len(disks) == 1
+    except AssertionError:
+        if len(disks) == 0:
+            raise NoUSBDiskPlugged("Il n'y a aucun disque USB branché.")
+        else:
+            raise MultipleUSBDisksPlugged(
+                "Il y a {nb} disques USB branchés.".format(nb=len(disks)))
+
+    # return it
+    return disks[0]
+
+
+def unmount_device(device_path):
+    if not sys.platform.startswith('linux'):
+        if settings.DEBUG:
+            logger.debug("(virtually) unmounting {}".format(device_path))
+            return
+        else:
+            raise NotImplemented("USB exports is Linux-only")
+
+    dev_root, dev_name = device_path.rsplit("/", 1)
+    partitions = [os.path.join(dev_root, fname)
+                  for fname in os.listdir(dev_root)
+                  if fname.startswith(dev_name) and fname != dev_name]
+
+    with sh.contrib.sudo:
+        for device_partition in partitions:
+            logger.debug("unmounting {}".format(device_partition))
+            try:
+                sh.umount(device_partition)
+            except sh.ErrorReturnCode_32:
+                pass
+
+
+def prepare_disk(device_path):
+    partition_path = "{dev}1".format(dev=device_path)
+    mount_point = tempfile.mkdtemp(suffix=partition_path.rsplit("/", 1)[-1])
+
+    if not sys.platform.startswith('linux'):
+        if settings.DEBUG:
+            logger.debug("(virtually) formattinh disk {}".format(device_path))
+            return mount_point
+        else:
+            raise NotImplemented("USB exports is Linux-only")
+
+    logger.debug("unmounting {}".format(device_path))
+    unmount_device(device_path)
+
+    with sh.contrib.sudo:
+        logger.debug("resetting partition table for {}".format(device_path))
+        sh.parted("-s", "-a", "optimal",
+                  device_path,
+                  "--",
+                  "mklabel",  "msdos",
+                  "mkpart", "primary", "fat32", "64s", "-1s")
+
+        logger.debug("formatting {}".format(partition_path))
+        sh.mkfs("-t", "vfat", "-F", "32", "-n", "SLDSES", partition_path)
+
+        logger.debug("mounting {} to {}".format(partition_path, mount_point))
+        sh.mount(partition_path, mount_point)
+
+    return mount_point

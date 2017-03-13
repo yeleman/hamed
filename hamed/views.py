@@ -6,6 +6,7 @@ import logging
 import re
 import os
 
+import humanfriendly
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
@@ -21,7 +22,9 @@ from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 from hamed.locations import get_communes
 from hamed.utils import (open_finder_at,
-                         get_export_fname, MIMES, upload_export_data)
+                         get_export_fname, MIMES, upload_export_data,
+                         find_export_disk, parse_parted_info)
+from hamed.exceptions import MultipleUSBDisksPlugged, NoUSBDiskPlugged
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +66,24 @@ def collect(request, collect_id):
         'ona_scan_form': get_form_detail(collect.ona_scan_form_pk)
         if collect.ona_scan_form_pk else {},
         'advanced_mode': Settings.advanced_mode()}
+    if collect.has_finalized():
+        try:
+            disk = find_export_disk()
+            disk_info = parse_parted_info(disk)
+            disk_name = "{name} ({size})".format(
+                name=disk_info[4],
+                size=humanfriendly.format_size(disk_info[2], binary=True))
+        except NoUSBDiskPlugged:
+            disk = None
+            disk_name = "Aucun disque branché"
+        except MultipleUSBDisksPlugged:
+            disk = None
+            disk_name = "Plusieurs disques USB branchés"
+
+        context.update({
+            'disk': disk,
+            'disk_name': disk_name
+        })
 
     return render(request, 'collect.html', context)
 
