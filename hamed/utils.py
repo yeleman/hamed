@@ -317,13 +317,15 @@ def count_files(folder):
                for root, _, files in os.walk(folder)])
 
 
-def copy_tree(src, dst, feedback=None):
+def copy_tree_fb(src, dst, feedback=None):
     def _copyfile(src, dst):
         if feedback is not None:
             feedback.tick(filename=os.path.basename(src))
         return shutil.copy2(src, dst)
 
-    shutil.copytree(src=src, dst=dst, copy_function=_copyfile)
+    shutil.copytree(src=src, dst=dst,
+                    ignore=shutil.ignore_patterns('.DS_Store'),
+                    copy_function=_copyfile)
 
 
 def get_us_env():
@@ -422,7 +424,7 @@ def prepare_disk(device_path):
 
     if not sys.platform.startswith('linux'):
         if settings.DEBUG:
-            logger.debug("(virtually) formattinh disk {}".format(device_path))
+            logger.debug("(virtually) formatting disk {}".format(device_path))
             return mount_point
         else:
             raise NotImplemented("USB exports is Linux-only")

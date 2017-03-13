@@ -7,12 +7,13 @@ import signal
 import json
 import shutil
 
+from path import Path as P
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from hamed.models.collects import Collect
-from hamed.utils import (count_files, copy_tree,
+from hamed.utils import (count_files, copy_tree_fb,
                          find_export_disk, prepare_disk, unmount_device)
 
 logger = logging.getLogger(__name__)
@@ -78,33 +79,41 @@ class USBExportProgress(WebSocket):
             try:
                 device_path = find_export_disk()
             except Exception as exp:
-                return fail(exp)
+                fail(exp)
+                return
 
             # format USB disk
             try:
                 mount_point = prepare_disk(device_path)
             except Exception as exp:
-                return fail("Impossible de formatter le disque USB {}"
-                            .format(device_path))
+                fail("Impossible de formatter le disque USB {}"
+                     .format(device_path))
+                return
             finally:
                 unmount_device(device_path)
+                P(mount_point).removedirs_p()
 
             # copy files to USB disk mount point
             try:
-                copy_tree(collect.get_documents_path(),
-                          mount_point,
-                          feedback=ticker)
+                copy_tree_fb(src=collect.get_documents_path(),
+                             dst=mount_point,
+                             feedback=ticker)
             except shutil.Error as exp:
+                logger.exception(exp)
                 for src, dst, reason in exp.exception:
                     logger.error("{src} -> {dst}: {reason}".format(
                         src=src, dst=dst, reason=reason))
-                return fail("Des erreurs ont eu lieu")
+                fail("Des erreurs ont eu lieu")
+                return
             except Exception as exp:
-                return fail("Des erreurs ont eu lieu: {}".format(exp))
+                logger.exception(exp)
+                fail("Des erreurs ont eu lieu: {}".format(exp))
+                return
             else:
                 inform(100, 'success', "Copie terminée avec succès.")
             finally:
                 unmount_device(device_path)
+                P(mount_point).removedirs_p()
 
     def handleConnected(self):
         print (self.address, 'connected')
