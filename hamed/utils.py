@@ -9,7 +9,6 @@ import os
 import platform
 import subprocess
 import json
-import shutil
 import sys
 import tempfile
 import getpass
@@ -281,15 +280,16 @@ def get_attachment(dataset, question_value, main_key='_attachments'):
 
 
 def open_finder_at(abs_path):
-    os.environ['DISPLAY'] = ':0'
+    username = getpass.getuser()
     if platform.system() == "Windows":
         os.startfile(abs_path)
     elif platform.system() == "Darwin":
         subprocess.Popen(["open", abs_path])
     else:
-        # TODO: fix this static sh*t
         # subprocess.Popen(["xdg-open", abs_path])
-        subprocess.Popen(["sudo", "-H", "-u", "sldses", "xdg-open", abs_path])
+        subprocess.Popen(
+            ["sudo", "-H", "-u", username, "nautilus",
+             "--display", ":0", abs_path])
 
 
 def share_form(form_pk):
