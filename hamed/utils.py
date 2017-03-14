@@ -6,12 +6,9 @@ import logging
 import io
 import csv
 import os
-import platform
-import subprocess
 import json
 import sys
 import tempfile
-import getpass
 
 import sh
 import humanfriendly
@@ -277,17 +274,6 @@ def get_attachment(dataset, question_value, main_key='_attachments'):
             if attachment.get('filename', "").endswith(question_value):
                 return attachment
     return None
-
-
-def open_finder_at(abs_path):
-    if platform.system() == "Windows":
-        os.startfile(abs_path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", abs_path])
-    else:
-        # subprocess.Popen(["xdg-open", abs_path])
-        sh.sudo("-u", settings.DESKTOP_USERNAME, "-H", "-s",
-                "nautilus", "--display", settings.DESKTOP_DISPLAY, abs_path)
 
 
 def share_form(form_pk):

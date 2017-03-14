@@ -22,8 +22,7 @@ from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 from hamed.locations import get_communes
-from hamed.utils import (open_finder_at,
-                         get_export_fname, MIMES, upload_export_data,
+from hamed.utils import (get_export_fname, MIMES, upload_export_data,
                          find_export_disk, parse_parted_info)
 from hamed.exceptions import MultipleUSBDisksPlugged, NoUSBDiskPlugged
 
@@ -88,6 +87,8 @@ def collect(request, collect_id):
             'disk': disk,
             'disk_name': disk_name
         })
+
+    context.update({'FOLDER_OPENER_SERVER': settings.FOLDER_OPENER_SERVER})
 
     return render(request, 'collect.html', context)
 
@@ -278,15 +279,6 @@ def exports_proxy(request, collect_id, format):
         response['Content-Disposition'] = \
             'attachment; filename="{}"'.format(fname)
         return response
-
-
-def open_documents_folder(request, collect_id):
-    collect = Collect.get_or_none(collect_id)
-    if collect is None:
-        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
-
-    open_finder_at(collect.get_documents_path())
-    return JsonResponse({'satus': 'success'})
 
 
 def help(request):

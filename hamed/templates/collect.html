@@ -145,9 +145,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 $('#open-folder').on('click', function (e) {
 	var button = $(this);
 	button.attr("disabled", "disabled");
-	$.get("{% url 'collect_folder' collect.id %}", function () {
-
-	})
+	$.get("{{ FOLDER_OPENER_SERVER }}{{ collect.get_documents_path }}", function () {})
 	.always(function () {
 		button.removeAttr("disabled");
 	});
