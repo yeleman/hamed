@@ -312,20 +312,14 @@ def upload_export_data(collect):
     return req.json()
 
 
-def count_files(folder):
-    return sum([len(list(filter(lambda x: not x.startswith('.'), files)))
-               for root, _, files in os.walk(folder)])
-
-
-def copy_tree_fb(src, dst, feedback=None):
-    def _copyfile(src, dst):
-        if feedback is not None:
-            feedback.tick(filename=os.path.basename(src))
-        return shutil.copy2(src, dst)
-
-    shutil.copytree(src=src, dst=dst,
-                    ignore=shutil.ignore_patterns('.DS_Store'),
-                    copy_function=_copyfile)
+def list_files(folder):
+    all_files = []
+    for root, folders, filenames in os.walk(folder):
+        for filename in filter(lambda x: not x.startswith('.'), filenames):
+            full_path = os.path.join(root, filename)
+            rel_path = P(full_path).relpath(folder)
+            all_files.append(rel_path)
+    return all_files
 
 
 def get_us_env():
@@ -344,7 +338,7 @@ def parse_parted_info(device_path):
             raise NotImplemented("USB exports is Linux-only")
 
     pcmd = sh.sudo.parted("-s", "-m", device_path, "print",
-                                  _env=get_us_env())
+                          _env=get_us_env())
     assert pcmd.exit_code == 0
     line = str(pcmd).splitlines()[1]
     path, size, driver, sector, block, mbr, name, _ = line.split(":")
@@ -425,6 +419,7 @@ def prepare_disk(device_path):
     if not sys.platform.startswith('linux'):
         if settings.DEBUG:
             logger.debug("(virtually) formatting disk {}".format(device_path))
+            logger.debug("(virtual) mount point: {}".format(mount_point))
             return mount_point
         else:
             raise NotImplemented("USB exports is Linux-only")

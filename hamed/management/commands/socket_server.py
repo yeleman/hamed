@@ -5,16 +5,18 @@
 import logging
 import signal
 import json
-import shutil
+import os
+import threading
 
 from path import Path as P
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.utils import timezone
 
 from hamed.models.collects import Collect
-from hamed.utils import (count_files, copy_tree_fb,
-                         find_export_disk, prepare_disk, unmount_device)
+from hamed.utils import (list_files, find_export_disk, prepare_disk,
+                         unmount_device)
 
 logger = logging.getLogger(__name__)
 clients = []
@@ -71,9 +73,6 @@ class USBExportProgress(WebSocket):
             logger.info("Received start request for {}".format(collect))
 
             inform(1, 'in-progress', "Préparation de la copie")
-            ticker = CopyProgressTicker(
-                nb_expected=count_files(collect.get_documents_path()),
-                client=self)
 
             # get device name of the sole USB disk
             try:
@@ -81,39 +80,56 @@ class USBExportProgress(WebSocket):
             except Exception as exp:
                 fail(exp)
                 return
+            else:
+                inform(5, 'in-progress', "Préparation disque USB")
 
             # format USB disk
             try:
                 mount_point = prepare_disk(device_path)
             except Exception as exp:
+                logger.exception(exp)
                 fail("Impossible de formatter le disque USB {}"
                      .format(device_path))
-                return
-            finally:
                 unmount_device(device_path)
                 P(mount_point).removedirs_p()
-
-            # copy files to USB disk mount point
-            try:
-                copy_tree_fb(src=collect.get_documents_path(),
-                             dst=mount_point,
-                             feedback=ticker)
-            except shutil.Error as exp:
-                logger.exception(exp)
-                for src, dst, reason in exp.exception:
-                    logger.error("{src} -> {dst}: {reason}".format(
-                        src=src, dst=dst, reason=reason))
-                fail("Des erreurs ont eu lieu")
-                return
-            except Exception as exp:
-                logger.exception(exp)
-                fail("Des erreurs ont eu lieu: {}".format(exp))
                 return
             else:
-                inform(100, 'success', "Copie terminée avec succès.")
-            finally:
+                inform(10, 'in-progress', "Formattage disque USB terminé")
+                logger.debug("USB preparation complete")
+
+            src = collect.get_documents_path()
+            dst = mount_point
+            all_files = list_files(src)
+            from pprint import pprint as pp ; pp(all_files)
+            ticker = CopyProgressTicker(nb_expected=len(all_files),
+                                        client=self)
+
+            def _copy_files(src, dst, ticker, device_path):
+                errors = []
+                inform(15, 'in-progress', "Copie des fichiers en cours…")
+                logger.debug("Starting file copy")
+                for index, filename in enumerate(all_files):
+                    ticker.tick(filename=filename)
+                    df = P(os.path.join(dst, filename))
+                    df.parent.makedirs_p()
+                    try:
+                        P(os.path.join(src, filename)).copy2(df)
+                    except Exception as exp:
+                        errors.append((filename, exp))
+                if len(errors) == 0:
+                    inform(100, 'success',
+                           "Copie terminée avec succès: {} fichiers."
+                           .format(ticker.nb_expected))
+                    logger.debug("All files copied")
+                else:
+                    fail("Des erreurs ont eu lieu")
+                logger.debug("unmounting and removing USB disk")
                 unmount_device(device_path)
-                P(mount_point).removedirs_p()
+                P(dst).removedirs_p()
+
+            t = threading.Thread(target=_copy_files,
+                                 args=[src, dst, ticker, device_path])
+            t.start()
 
     def handleConnected(self):
         print (self.address, 'connected')

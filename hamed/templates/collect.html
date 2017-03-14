@@ -76,7 +76,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 {% endif %}
 
 <div id="action-modal" class="modal fade" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-sm" role="document">
+  <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
       <h4 class="modal-title"></h4>
@@ -94,7 +94,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 </div>
 
 <div id="usb-modal" class="modal fade" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-sm" role="document">
+  <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
       <h4 class="modal-title">Export USB des médias</h4>
@@ -126,7 +126,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 <p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="{% url 'collect_exports' collect.id 'json' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
 
 <h3>Fichiers médias</h3>
-<p><button id="export-usb" {% if not disk %}disabled="disabled"{% endif %} class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé <strong><span class="alert-{% if disk %}info{% else %}danger{% endif %}">_{{ disk_name }}_</span></button></p>
+<p><button id="export-usb" {% if not disk %}disabled="disabled"{% endif %} class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé <strong><span class="label alert-{% if disk %}info{% else %}danger{% endif %}">{{ disk_name }}</span></button></p>
 {% endif %}
 
 {% endblock %}
@@ -221,6 +221,47 @@ $('#drop_data-btn').on('click', function(e) {
 
 
 $('#export-usb').on('click', function () {
+
+	function updateUI(progress, status, message) {
+		// update progress bar
+		$('#usb-modal .progress-bar').attr('aria-valuenow', progress);
+		$('#usb-modal .progress-bar').css('width', progress + '%');
+
+		// update text message
+		var cssName;
+		switch (status) {
+			case "failed":
+				cssName = 'danger';
+				break;
+			case "success":
+				cssName = 'success';
+				break;
+			default:
+			case "in-progress":
+				cssName = 'default';
+				break;
+		}
+		
+		// apply style based on feedback
+		$('#usb-modal #feedback')
+			.removeClass("alert-danger alert-info alert-success alert-warning")
+			.addClass("alert-" + cssName)
+		$('#usb-modal #feedback').text(message);
+
+		$('#usb-modal .progress-bar').removeClass("active");
+		if (status == 'in-progress') {
+			$('#usb-modal .progress-bar').addClass("active");
+		}
+	}
+
+	function resetUI() {
+		updateUI(0, 'default', "Veuillez patienter…");
+	}
+
+	function failUI(message) {
+		updateUI(100, 'failed', message);
+	}
+	
 	$('#usb-modal').modal({backdrop: "static", "keybord": false, show: true});
 	var websocket;
 
@@ -253,44 +294,22 @@ $('#export-usb').on('click', function () {
 		try {status = data.status; } catch(e) { status = 'failed'; }
 		try {progress = data.progress; } catch(e) { progress = 0; }
 		try {message = data.message; } catch (e) { message = ""; }
-		console.log("message: " + message);
-		console.log(evt.data);
-		console.log(data);
+		// console.log("message: " + message);
+		// console.log(evt.data);
+		// console.log(data);
 		
-		// update progress bar
-		$('#usb-modal .progress-bar').attr('aria-valuenow', progress);
-		$('#usb-modal .progress-bar').css('width', progress + '%');
-
-		// update text message
-		var cssName;
-		switch (status) {
-			case "failed":
-				cssName = 'danger';
-				break;
-			case "success":
-				cssName = 'success';
-				break;
-			default:
-			case "in-progress":
-				cssName = 'default';
-				break;
-		}
-		
-		// apply style based on feedback
-		$('#usb-modal #feedback')
-			.removeClass("alert-danger alert-info alert-success alert-warning")
-			.addClass("alert-" + cssName)
-		$('#usb-modal #feedback').text(message);
-
-		if (status != 'in-progress') {
-			$('#usb-modal .progress-bar').removeClass("active");
-		}
-
 		writeToScreen("response: " + evt.data + '\n');
+
+		updateUI(progress, status, message);
 	}
 
 	function onError(evt) {
 		writeToScreen('error: ' + evt.data + '\n');
+		if (evt.data == undefined && websocket.readyState == 3) {
+			failUI("Impossible de se connecter au socket.");
+		} else {
+			failUI(evt.data);
+		}
 		websocket.close();
 	}
 
@@ -310,16 +329,17 @@ $('#export-usb').on('click', function () {
 	function sendAction(action, collect_id) {
 		doSend(JSON.stringify({action: "start", collect_id: collect_id}));
 	}
+
+	$('#usb-modal button').on('click', function () {
+		resetUI();
+	});
 	
 	// connect to WS
 	doConnect("ws://{{ WS_SERVER }}");
 });
 
 
-$('#start-usb').on('click', function () {
-	// connect to WebSocket
-	
-});
+
 
 $('#upload-anam').on('click', function () {
 	postWithLoading(
