@@ -220,6 +220,10 @@ $('#drop_data-btn').on('click', function(e) {
 
 $('#export-usb').on('click', function () {
 
+	if (!confirm("Êtes vous sûr de vouloir exporter sur la clé ? Elle sera completement effacée !")) {
+		return false;
+	}
+
 	function updateUI(progress, status, message) {
 		// update progress bar
 		$('#usb-modal .progress-bar').attr('aria-valuenow', progress);
@@ -343,8 +347,6 @@ $('#export-usb').on('click', function () {
 	// connect to WS
 	doConnect("ws://{{ WS_SERVER }}");
 });
-
-
 
 
 $('#upload-anam').on('click', function () {
