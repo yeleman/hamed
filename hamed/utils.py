@@ -428,6 +428,7 @@ def prepare_disk(device_path):
     unmount_device(device_path)
 
     us_environ = get_us_env()
+    username = sh.whoami()
 
     with sh.sudo:
         logger.debug("resetting partition table for {}".format(device_path))
@@ -444,5 +445,6 @@ def prepare_disk(device_path):
 
         logger.debug("mounting {} to {}".format(partition_path, mount_point))
         sh.mount(partition_path, mount_point)
+        sh.chown(username, mount_point)
 
     return mount_point
