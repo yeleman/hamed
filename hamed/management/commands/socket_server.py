@@ -58,11 +58,11 @@ class USBExportProgress(WebSocket):
 
         def fail(message):
             inform(100, 'failed', "Échec: {msg}".format(msg=message))
-            self.disconnect()
+            self.close("failure")
 
         if jsd is None:
             logger.error("bad request")
-            self.disconnect()
+            self.disconnect("bad request")
 
         if jsd.get('action') == 'start':
             collect_id = jsd.get('collect_id')
@@ -115,6 +115,7 @@ class USBExportProgress(WebSocket):
                     try:
                         P(os.path.join(src, filename)).copy2(df)
                     except Exception as exp:
+                        logger.exception(exp)
                         errors.append((filename, exp))
                 if len(errors) == 0:
                     inform(100, 'success',
@@ -122,7 +123,9 @@ class USBExportProgress(WebSocket):
                            .format(ticker.nb_expected))
                     logger.debug("All files copied")
                 else:
-                    fail("Des erreurs ont eu lieu")
+                    fail("Des erreurs ont eu lieu:\n{errors}".format(
+                        "\n".join(["{f}: {exp}".format(f=f, exp=ex)
+                                   for f, ex in errors])))
                 logger.debug("unmounting and removing USB disk")
                 unmount_device(device_path)
                 P(dst).removedirs_p()

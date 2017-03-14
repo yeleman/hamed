@@ -12,6 +12,7 @@ import json
 import shutil
 import sys
 import tempfile
+import getpass
 
 import sh
 import humanfriendly
@@ -414,7 +415,10 @@ def unmount_device(device_path):
 
 def prepare_disk(device_path):
     partition_path = "{dev}1".format(dev=device_path)
+    username = getpass.getuser()
     mount_point = tempfile.mkdtemp(suffix=partition_path.rsplit("/", 1)[-1])
+    P(mount_point).chown(username)
+    P(mount_point).chmod(777)
 
     if not sys.platform.startswith('linux'):
         if settings.DEBUG:
@@ -428,7 +432,8 @@ def prepare_disk(device_path):
     unmount_device(device_path)
 
     us_environ = get_us_env()
-    username = sh.whoami()
+    uid = os.getuid()
+    gid = os.getgid()
 
     with sh.sudo:
         logger.debug("resetting partition table for {}".format(device_path))
@@ -444,7 +449,8 @@ def prepare_disk(device_path):
                 _env=us_environ)
 
         logger.debug("mounting {} to {}".format(partition_path, mount_point))
-        sh.mount(partition_path, mount_point)
-        sh.chown(username, mount_point)
+        sh.mount("-o", "umask=0,dmask=000,fmask=111,uid={uid},gid={gid}"
+                       .format(uid=uid, gid=gid),
+                 partition_path, mount_point)
 
     return mount_point
