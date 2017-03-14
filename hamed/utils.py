@@ -280,16 +280,14 @@ def get_attachment(dataset, question_value, main_key='_attachments'):
 
 
 def open_finder_at(abs_path):
-    username = getpass.getuser()
     if platform.system() == "Windows":
         os.startfile(abs_path)
     elif platform.system() == "Darwin":
         subprocess.Popen(["open", abs_path])
     else:
         # subprocess.Popen(["xdg-open", abs_path])
-        subprocess.Popen(
-            ["sudo", "-H", "-u", username, "nautilus",
-             "--display", ":0", abs_path])
+        sh.sudo("-u", settings.DESKTOP_USERNAME, "-H", "-s",
+                "nautilus", "--display", settings.DESKTOP_DISPLAY, abs_path)
 
 
 def share_form(form_pk):
