@@ -93,7 +93,7 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
   </div>
 </div>
 
-<div id="usb-modal" class="modal" tabindex="-1" role="dialog">
+<div id="usb-modal" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -246,11 +246,19 @@ $('#export-usb').on('click', function () {
 		$('#usb-modal #feedback')
 			.removeClass("alert-danger alert-info alert-success alert-warning")
 			.addClass("alert-" + cssName)
-		$('#usb-modal #feedback').text(message);
+		$('#usb-modal #feedback').html(message);
 
+		// remove animation on bar
 		$('#usb-modal .progress-bar').removeClass("active");
+
+		// hide close button
+		$('#usb-modal button').hide();
+
+
 		if (status == 'in-progress') {
 			$('#usb-modal .progress-bar').addClass("active");
+		} else {
+			$('#usb-modal button').show();
 		}
 	}
 

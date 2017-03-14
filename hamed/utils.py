@@ -415,10 +415,7 @@ def unmount_device(device_path):
 
 def prepare_disk(device_path):
     partition_path = "{dev}1".format(dev=device_path)
-    username = getpass.getuser()
     mount_point = tempfile.mkdtemp(suffix=partition_path.rsplit("/", 1)[-1])
-    P(mount_point).chown(username)
-    P(mount_point).chmod(777)
 
     if not sys.platform.startswith('linux'):
         if settings.DEBUG:
