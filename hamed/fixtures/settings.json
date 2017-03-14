@@ -41,7 +41,7 @@
 {
   "fields": {
   	"key": "upload-server",
-    "value": "http://192.168.6.152:10000"
+    "value": "https://ramed.ml"
   },
   "model": "hamed.Settings",
   "pk": 5
