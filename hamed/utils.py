@@ -449,7 +449,7 @@ def prepare_disk(device_path):
                 _env=us_environ)
 
         logger.debug("mounting {} to {}".format(partition_path, mount_point))
-        sh.mount("-o", "umask=0,dmask=000,fmask=111,uid={uid},gid={gid}"
+        sh.mount("-o", "umask=0,dmask=000,fmask=111,uid={uid},gid={gid},utf8"
                        .format(uid=uid, gid=gid),
                  partition_path, mount_point)
 
