@@ -1,5 +1,6 @@
 {% extends "single.html" %}
 {% load static %}
+{% load bootstrap_tags %}
 
 {% block title %}Collectes du cercle{% endblock %}
 {% block title_link %}{% url 'home' %}{% endblock %}
@@ -16,10 +17,10 @@
 		<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 		<h3 class="panel-title">Nouvelle collecte</h3></div>
 	<div class="panel-body">
-	<form action="{% url 'start_collect' %}" method="POST">
+	<form class="form-inline" action="{% url 'start_collect' %}" method="POST">
 	{% csrf_token %}
-	{{ form }}
-	<input type="submit" class="btn btn-primary" value="Créer la collecte">
+	{{ form|as_bootstrap_inline }}
+	<button type="submit" class="btn btn-primary">Créer la collecte</button>
 	</form>
 	</div>
 </div>

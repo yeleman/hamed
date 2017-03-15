@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django import forms
 from django.conf import settings
+import hamed_advanced
 
 from hamed.models.collects import Collect
 from hamed.models.targets import Target
@@ -23,7 +24,8 @@ from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
 from hamed.locations import get_communes
 from hamed.utils import (get_export_fname, MIMES, upload_export_data,
-                         find_export_disk, parse_parted_info)
+                         find_export_disk, parse_parted_info,
+                         is_advanced_mode, activate_advanced_mode)
 from hamed.exceptions import MultipleUSBDisksPlugged, NoUSBDiskPlugged
 
 logger = logging.getLogger(__name__)
@@ -65,7 +67,7 @@ def collect(request, collect_id):
         if collect.ona_form_pk else {},
         'ona_scan_form': get_form_detail(collect.ona_scan_form_pk)
         if collect.ona_scan_form_pk else {},
-        'advanced_mode': Settings.advanced_mode()}
+        'advanced_mode': is_advanced_mode()}
     if collect.has_finalized():
         try:
             disk = find_export_disk()
@@ -99,7 +101,7 @@ def collect_data(request, collect_id):
         raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
     context = {'collect': collect,
-               'advanced_mode': Settings.advanced_mode()}
+               'advanced_mode': is_advanced_mode()}
 
     return render(request, 'collect_data.html', context)
 
@@ -109,7 +111,7 @@ def delete_target(request, collect_id, target_id):
     if collect is None:
         raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
 
-    if not Settings.advanced_mode():
+    if not is_advanced_mode():
         messages.error(request,
                        "Impossible de supprimer une cible hors du mode avancé")
         return redirect('collect_data', collect_id=collect.id)
@@ -302,7 +304,7 @@ def collect_downgrade(request, collect_id):
         messages.error(request, message)
         return JsonResponse({'status': 'error', 'message': message})
 
-    if not Settings.advanced_mode():
+    if not is_advanced_mode():
         return fail("Modification de la collecte impossible "
                     "hors du «mode avancé»")
 
@@ -333,7 +335,7 @@ def collect_drop_scan_data(request, collect_id):
         messages.error(request, message)
         return JsonResponse({'status': 'error', 'message': message})
 
-    if not Settings.advanced_mode():
+    if not is_advanced_mode():
         return fail("Suppression des données «scan» impossible "
                     "hors du «mode avancé»")
 
@@ -360,7 +362,7 @@ def collect_drop_data(request, collect_id):
         messages.error(request, message)
         return JsonResponse({'status': 'error', 'message': message})
 
-    if not Settings.advanced_mode():
+    if not is_advanced_mode():
         return fail("Suppression des données impossible hors du «mode avancé»")
 
     collect = Collect.get_or_none(collect_id)
@@ -401,3 +403,49 @@ def upload_data(request, collect_id):
     else:
         return fail("Impossible de transmettre à l'ANAM : {msg}"
                     .format(msg=result.get('message')))
+
+
+class AdvancedRequestForm(forms.Form):
+
+    request_code = forms.CharField(
+        label="RequestCode", max_length=9, min_length=9,
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}))
+    activation_code = forms.CharField(
+        label="ActivationCode", max_length=5, min_length=5,
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}))
+
+    def clean_activation_code(self):
+        if not hamed_advanced.validate_acceptation_code(
+                self.cleaned_data.get('request_code'),
+                self.cleaned_data.get('activation_code')):
+            raise forms.ValidationError(
+                "ActivationCode non valide pour ce RequestCode",
+                code='invalid')
+
+
+def advanced_mode(request):
+    if is_advanced_mode():
+        return redirect('home')
+
+    request_code = hamed_advanced.get_adavanced_request_code(
+        cercle_id=Settings.cercle_id())
+
+    if request.method == 'POST':
+        form = AdvancedRequestForm(request.POST)
+        if form.is_valid():
+            cercle_id, date, pad = hamed_advanced.decode_request_code(
+                form.cleaned_data['request_code'])
+            activate_advanced_mode(date)
+            messages.success(request, "Mode avancé activé.")
+            return redirect('home')
+        else:
+            pass
+    else:
+        form = AdvancedRequestForm(initial={'request_code': request_code})
+
+    context = {
+        'form': form,
+        'request_code': request_code,
+    }
+
+    return render(request, 'advanced.html', context)

@@ -9,6 +9,7 @@ import os
 import json
 import sys
 import tempfile
+import datetime
 
 import sh
 import humanfriendly
@@ -290,7 +291,7 @@ def unshare_form(form_pk):
 
 def upload_export_data(collect):
     url = "/".join([Settings.upload_server(), "upload"])
-    req = requests.post(url=url, json=collect.export_data())
+    req = requests.post(url=url, json=collect.export_data_data())
     try:
         assert req.status_code == 200
     except AssertionError:
@@ -442,3 +443,20 @@ def prepare_disk(device_path):
                  partition_path, mount_point)
 
     return mount_point
+
+
+def is_advanced_mode():
+    try:
+        cercle_id, date = settings.ADVANCED_MODE
+    except:
+        return False
+    else:
+        if cercle_id == Settings.cercle_id() and date == datetime.date.today():
+            return True
+        else:
+            del(settings.ADVANCED_MODE)
+    return False
+
+
+def activate_advanced_mode(date):
+    settings.ADVANCED_MODE = (Settings.cercle_id(), date)

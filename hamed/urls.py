@@ -39,6 +39,7 @@ urlpatterns = [
         views.upload_data, name='collect_upload'),
 
     url(r'^help/?$', views.help, name='help'),
+    url(r'^advanced/?$', views.advanced_mode, name='advanced_mode'),
 
     url(r'^admin/', admin_site.urls),
 ]

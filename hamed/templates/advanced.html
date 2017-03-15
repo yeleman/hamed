@@ -1,0 +1,25 @@
+{% extends "single.html" %}
+{% load static %}
+{% load bootstrap_tags %}
+
+{% block title %}Mode avancé{% endblock %}
+{% block title_link %}{% url 'advanced_mode' %}{% endblock %}
+
+{% block content %}
+<h2>Mode avancé</h2>
+<p>Le mode avancé vous permet d'utiliser certaines fonctionnalités destructrices de données. Il est désactivé par défaut.</p>
+<p>Sur demande auprès de la DNDS, il est possible de l'activer pour la journée. Cela pourra vous permettre de supprimer certaines données non voulues.</p>
+<hr />
+<p>Contactez la DNDS en indiquant le code <span style="font-size:2em;" class="label label-warning setting">{{ request_code }}</span></strong> et renseignez le code qu'ils vous auront communiqué si dessous.</p>
+
+<hr />
+<h3>Activation</h3>
+<p>Après avoir reçu le code d'activation (<span class="settings">ActivationCode</span>) de la DNDS, renseignez-le ci-dessous, avec le code de demande.</p>
+<p><strong>Attention</strong>, vous devez indiquer comme <span class="settings">RequestCode</span> le code que vous avez fourni à la DNDS, et pas forcément celui affiché actuellement.</p>
+<form class="alert alert-danger form-inline" action="{% url 'advanced_mode' %}" method="POST">
+{% csrf_token %}
+{{ form|as_bootstrap_inline }}
+<button type="submit" class="btn btn-danger">Activer mode avancé</button>
+</form>
+
+{% endblock %}

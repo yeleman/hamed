@@ -10,4 +10,6 @@ Path.py==10.1
 pyxform==0.9.24
 humanfriendly==2.4
 sh==1.12.10
-pip install git+https://github.com/dpallot/simple-websocket-server.git
+git+https://github.com/dpallot/simple-websocket-server.git
+hamed-advanced==1.0
+django-forms-bootstrap==3.0.1
