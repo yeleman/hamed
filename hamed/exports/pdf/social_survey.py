@@ -35,7 +35,7 @@ def gen_social_survey_pdf(target):
     # lieu (pas sur papier)
     lieu_region, lieu_cercle, lieu_commune, lieu_village, lieu = get_lieu(
         instance, 'lieu_')
-    numero_enquete = instance.get('numero') or ""
+    # numero_enquete = instance.get('numero') or ""
     objet_enquete = get_other(instance, 'objet')
     identifiant_enqueteur = instance.get('enqueteur') or BLANK
     demandeur = get_other(instance, 'demandeur')
@@ -178,7 +178,7 @@ def gen_social_survey_pdf(target):
     numero_enquete_t.setStyle(TableStyle([('BOX', (0, 0), (-1, -1),
                                            0.30, colors.black), ]))
     story.append(numero_enquete_t)
-    story.append(draw_paragraph("Identifiant enquêteur", numero_enquete))
+    story.append(draw_paragraph("Identifiant enquêteur", identifiant_enqueteur))
     story.append(draw_paragraph("Objet de l’enquête",
                                 get_label_for('objet', objet_enquete)))
     story.append(draw_paragraph("Enquête demandée par",
