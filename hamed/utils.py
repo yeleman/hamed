@@ -291,7 +291,7 @@ def unshare_form(form_pk):
 
 def upload_export_data(collect):
     url = "/".join([Settings.upload_server(), "upload"])
-    req = requests.post(url=url, json=collect.export_data_data())
+    req = requests.post(url=url, json=collect.export_data())
     try:
         assert req.status_code == 200
     except AssertionError:
