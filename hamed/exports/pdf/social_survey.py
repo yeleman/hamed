@@ -281,7 +281,7 @@ def gen_social_survey_pdf(target):
                     "à charge : {}".format(nb_enfants_acharge)])))
     # autres
     story.append(draw_paragraph_sub_title_h3(
-        "Autres persionnes à la charge de l’enquêté{}".format(
+        "Autres personnes à la charge de l'enquêté{}".format(
                                                     "e" if is_female else "")))
     autres = instance.get('autres', [])
     if autres == []:
