@@ -261,9 +261,10 @@ def gen_social_survey_pdf(target):
                 'enfants/situation/handicape')
             acharge, acharge_text = get_bool(enfant,
                 'enfants/situation/acharge')
-            # Scolarisé = SC; Handicapé = HP; À charge = AC; Autre parent = AP
+            sexe_enfant = get_other(enfant, 'enfants/enfant_sexe')
             story.append(draw_paragraph("","{nb}. {enfant}".format(
-                nb=nb + 1, enfant=concat([name_enfant, naissance_enfant,
+                nb=nb + 1, enfant=concat([name_enfant,
+                    "M" if sexe_enfant == "masculin" else "F", naissance_enfant,
                     "à {lieu}".format(lieu=lieu_naissance_enfant),
                     "SC : {}".format(get_label_for("scolarise",scolarise_text)),
                     "HD : {}".format(get_label_for("handicape",handicape_text)),
