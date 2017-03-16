@@ -70,6 +70,7 @@ def gen_indigence_certificate_pdf(target):
     adresse = instance.get('enquete/adresse', BLANK)
     cercle = target.collect.cercle
     commune = target.collect.commune
+    localisation_enquete = instance.get("localisation-enquete/lieu_village")
 
     headers = [["MINISTERE DE L'ADMINISTRATION", "", "",  "REPUBLIQUE DU MALI"],
                ["TERRITORIALE DE LA DECENTRALISATION",
@@ -90,14 +91,14 @@ def gen_indigence_certificate_pdf(target):
         """Je soussigné, {non_maire}, maire de la commune de {name_commune}
         cercle de {name_cercle} certifie que le nommé {name}, {naissance}
         à {lieu_naissance}, {titre_enquete} de {name_pere} et de {name_mere},
-        domicilié à «{adresse}» <b>est indigent.</b>""".format(
+        domicilié à {village_enquete} «{adresse}» <b>est indigent.</b>""".format(
         non_maire=target.collect.mayor, name_commune=commune, name=name,
         name_cercle=cercle, naissance=naissance, lieu_naissance=lieu_naissance,
         titre_enquete="fille " if is_female else "fils ", name_pere=name_pere,
-        name_mere=name_mere, adresse=adresse.lower())))
-    story.append(draw_paragraph(
-        "<b>NB : </b> {}".format("Ce certificat d'indigence est valable pour "
-            "une durée de six (6) mois à compter de sa date de signature.")))
+        name_mere=name_mere, village_enquete=localisation_enquete, adresse=adresse.lower())))
+    # story.append(draw_paragraph(
+    #     "<b>NB : </b> {}".format("Ce certificat d'indigence est valable pour "
+    #         "une durée de six (6) mois à compter de sa date de signature.")))
     story.append(draw_paragraph("En foi de quoi, je lui délivre le présent "
         "certificat pour servir et faire valoir ce que de droit."))
     story.append(draw_paragraph("<b>Bamako, le</b> {}".format(date_filter(
