@@ -92,3 +92,5 @@ ENV/
 *.sqlite3
 *.sqlite
 *.db
+
+hamed/fixtures/~$enquete-sociale-mobile.xlsx
