@@ -297,8 +297,10 @@ def gen_social_survey_pdf(target):
                 naissance_autre, date_or_year = get_dob(autre, 'autres/autre_')
             autre_parente = get_other(autre, 'autres/autre_parente')
             autre_profession = get_other(autre, 'autres/autre_profession')
-            story.append(draw_paragraph("","{nb}. {enfant}".format(
-                nb=nb + 1, enfant=concat([name_autre or BLANK, naissance_autre,
+
+            sexe_autre = get_other(autre, 'autres/autre_sexe')
+            story.append(draw_paragraph("","{nb}. {autre}".format(
+                nb=nb + 1, autre=concat([name_autre or BLANK, "M" if sexe_autre == "masculin" else "F", naissance_autre,
                 "à {lieu}".format(lieu=lieu_naissance_autre),
                 get_label_for("autre_parente", autre_parente),
                 get_label_for("autre_profession", autre_profession)])), 10))
