@@ -13,7 +13,7 @@ from django.utils import timezone
 from jsonfield.fields import JSONField
 
 from hamed.identifiers import full_random_id
-from hamed.utils import get_attachment, PERSONAL_FILES
+from hamed.utils import get_attachment, PERSONAL_FILES, slugify_for_disk
 from hamed.ona import delete_submission
 
 logger = logging.getLogger(__name__)
@@ -66,9 +66,10 @@ class Target(models.Model):
     nonindigents = NonIndigentManager()
 
     def fname(self):
-        return "{ident}-{last} {first}".format(
-            ident=self.identifier, last=self.last_name.upper(),
-            first=self.first_name.title())
+        return slugify_for_disk("{ident}-{last} {first}".format(
+            ident=self.identifier,
+            last=self.last_name.strip().upper(),
+            first=self.first_name.strip().title()))
 
     def name(self):
         return "{first} {last}".format(

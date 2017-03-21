@@ -10,6 +10,8 @@ import json
 import sys
 import tempfile
 import datetime
+import string
+import unicodedata
 
 import sh
 import humanfriendly
@@ -460,3 +462,10 @@ def is_advanced_mode():
 
 def activate_advanced_mode(date):
     settings.ADVANCED_MODE = (Settings.cercle_id(), date)
+
+
+def slugify_for_disk(text):
+    valid_chars = "-_.() {l}{d}".format(
+        l=string.ascii_letters, d=string.digits)
+    slug = unicodedata.normalize('NFKD', text)
+    return "".join([c for c in slug if c in valid_chars])
