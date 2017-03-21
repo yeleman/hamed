@@ -77,7 +77,7 @@ def collect(request, collect_id):
 
     if collect.ona_form_pk:
         try:
-            ona_form = get_form_detail(collect.ona_scan_form_pk)
+            ona_form = get_form_detail(collect.ona_form_pk)
         except Exception as exp:
             return fail(exp)
 
