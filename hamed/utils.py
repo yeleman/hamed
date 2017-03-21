@@ -74,8 +74,8 @@ def check_targets_documents_folder(collect):
 def get_document_fname(kind, target):
     templates = {
         'survey': "{id}_enquete-sociale.pdf",
-        'indigence': "{id}_certificat-indigence-vierge.pdf",
-        'residence': "{id}_certificat-residence-vierge.pdf",
+        'indigence': "{id}_certificat-indigence-nonsigne.pdf",
+        'residence': "{id}_certificat-residence-nonsigne.pdf",
     }
     return templates.get(kind).format(id=target.identifier)
 
