@@ -61,13 +61,37 @@ def collect(request, collect_id):
     collect = Collect.get_or_none(collect_id)
     if collect is None:
         raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
     context = {
         'collect': collect,
-        'ona_form': get_form_detail(collect.ona_form_pk)
-        if collect.ona_form_pk else {},
-        'ona_scan_form': get_form_detail(collect.ona_scan_form_pk)
-        if collect.ona_scan_form_pk else {},
-        'advanced_mode': is_advanced_mode()}
+        'advanced_mode': is_advanced_mode()
+    }
+
+    ona_form = {}
+    ona_scan_form = {}
+
+    def fail(exp):
+        messages.error(request, "ERREUR ONA. Contactez le support: {exp}"
+                                .format(exp=exp))
+        return redirect('home')
+
+    if collect.ona_form_pk:
+        try:
+            ona_form = get_form_detail(collect.ona_scan_form_pk)
+        except Exception as exp:
+            return fail(exp)
+
+    if collect.ona_scan_form_pk:
+        try:
+            ona_scan_form = get_form_detail(collect.ona_scan_form_pk)
+        except Exception as exp:
+            return fail(exp)
+
+    context.update({
+        'ona_form': ona_form,
+        'ona_scan_form': ona_scan_form
+    })
+
     if collect.has_finalized():
         try:
             disk = find_export_disk()
