@@ -49,7 +49,7 @@ class ArchivedCollectManager(models.Manager):
 
 
 def default_cercle_id():
-    return Settings.cercle_id
+    return Settings.cercle_id()
 
 
 class Collect(models.Model):
