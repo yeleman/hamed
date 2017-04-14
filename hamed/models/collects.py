@@ -48,6 +48,10 @@ class ArchivedCollectManager(models.Manager):
             .filter(status=Collect.FINALIZED)
 
 
+def default_cercle_id():
+    return Settings.cercle_id
+
+
 class Collect(models.Model):
 
     STARTED = STARTED
@@ -74,7 +78,7 @@ class Collect(models.Model):
 
     cercle_id = models.CharField(
         verbose_name="Cercle",
-        max_length=100, default="33")  # Settings.cercle_id
+        max_length=100, default=default_cercle_id)
     commune_id = models.CharField(
         verbose_name="Commune",
         max_length=100, choices=[],)
