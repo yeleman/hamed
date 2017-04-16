@@ -431,7 +431,7 @@ def prepare_disk(device_path):
         sh.parted("-s", "-a", "optimal",
                   device_path,
                   "--",
-                  "mklabel",  "msdos",
+                  "mklabel", "msdos",
                   "mkpart", "primary", "fat32", "64s", "-1s",
                   _env=us_environ)
 

@@ -15,8 +15,8 @@ from reportlab.platypus import (
 from django.utils import timezone
 from django.template.defaultfilters import date as date_filter
 
-from hamed.exports.common import (get_lieu_naissance, get_lieu, get_other,
-                                  get_date, get_dob, get_nom)
+from hamed.exports.common import (get_lieu_naissance, get_other,
+                                  get_dob, get_nom)
 from hamed.form_labels import get_label_for
 
 BLANK = "néant"
@@ -38,8 +38,8 @@ def gen_residence_certificate_pdf(target):
         y = math.ceil(doc.height * 0.9)
 
         canvas.saveState()
-        canvas.drawImage(
-            ImageReader(target.get_qrcode()), x - qrsize / 2, y, qrsize, qrsize)
+        canvas.drawImage(ImageReader(target.get_qrcode()), x - qrsize / 2, y,
+                         qrsize, qrsize)
         canvas.drawCentredString(x, y, text)
         canvas.restoreState()
 
@@ -50,7 +50,7 @@ def gen_residence_certificate_pdf(target):
     def draw_paragraph(data, indent=30, align="left"):
         return Paragraph("""<para align={align} leftIndent={indent}
                          spaceb=2 spaceafter=1>{data}</para>""".format(
-                            align=align, indent=indent, data=data), n_style)
+                         align=align, indent=indent, data=data), n_style)
 
     doc = SimpleDocTemplate(pdf_form, pagesize=A4)
 
@@ -68,15 +68,15 @@ def gen_residence_certificate_pdf(target):
     nom_mere, prenoms_mere, name_mere = get_nom(
         instance, p='enquete/filiation/', s='-mere')
 
-    situation_matrioniale = instance.get(
-        'enquete/situation-matrimoniale', BLANK)
-    adresse = instance.get('enquete/adresse', BLANK)
+    # situation_matrioniale = instance.get(
+    #     'enquete/situation-matrimoniale', BLANK)
+    # adresse = instance.get('enquete/adresse', BLANK)
     profession = get_other(instance, 'enquete/profession')
     cercle = target.collect.cercle
     commune = target.collect.commune
     localisation_enquete = instance.get("localisation-enquete/lieu_village")
 
-    headers = [["MINISTERE DE L'ADMINISTRATION", "", "",  "REPUBLIQUE DU MALI"],
+    headers = [["MINISTERE DE L'ADMINISTRATION", "", "", "REPUBLIQUE DU MALI"],
                ["TERRITORIALE DE LA DECENTRALISATION",
                    "", "", "Un Peuple Un But Une Foi"],
                ["ET DE LA REFORME DE L'ETAT", "", "", "**" * 10],
@@ -111,24 +111,27 @@ def gen_residence_certificate_pdf(target):
         .format(maire=target.collect.mayor, commune=commune)))
     story.append(draw_paragraph(
         " Certifions que {} {}".format("Mme" if is_female else "M.", name)))
-    story.append(
-        draw_paragraph("{} à {}".format(naissance.capitalize(), lieu_naissance)))
+    story.append(draw_paragraph("{} à {}".format(naissance.capitalize(),
+                 lieu_naissance)))
     story.append(draw_paragraph(
-        "{sexe} de {name_pere}  et de {name_mere}.".format(sexe="Fille "
-        if is_female else "Fils", name_pere=name_pere, name_mere=name_mere)))
-    story.append(draw_paragraph(
-        "Exerçant la profession : {}".format(get_label_for('profession', profession))))
+        "{sexe} de {name_pere}  et de {name_mere}.".format(
+            sexe="Fille " if is_female else "Fils", name_pere=name_pere,
+            name_mere=name_mere)))
+    story.append(draw_paragraph("Exerçant la profession : {}".format(
+        get_label_for('profession', profession))))
 
-    story.append(draw_paragraph("Réside depuis plus de trois (3) mois à {village_enquete} dans la "
-        "commune de {commune}.".format(village_enquete=localisation_enquete.upper(),
-                                       commune=commune)))
+    story.append(draw_paragraph(
+        "Réside depuis plus de trois (3) mois à {village_enquete} dans la "
+        "commune de {commune}.".format(
+            village_enquete=localisation_enquete.upper(), commune=commune)))
     # story.append(draw_paragraph(num_piece_and_centre))
-    story.append(draw_paragraph("En foi de quoi, nous lui avons délivré le "
-        "présent certificat pour servir et faire valoir ce que de droit."))
+    story.append(draw_paragraph("""En foi de quoi, nous lui avons délivré le
+                                présent ertificat pour servir et faire valoir
+                                ce que de droit."""))
     story.append(draw_paragraph("Pour constitution du dossier."))
-    story.append(
-        draw_paragraph("<b>Bamako, le</b> {}".format(
-            date_filter(timezone.now())), align="right"))
+
+    story.append(draw_paragraph("<b>{commune}, le</b> {date}".format(
+        commune=commune, date=date_filter(timezone.now())), align="right"))
     story.append(draw_paragraph("Le Maire", align="right"))
 
     doc.build(story, onFirstPage=addQRCodeToFrame)

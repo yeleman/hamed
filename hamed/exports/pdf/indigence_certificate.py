@@ -5,7 +5,6 @@
 import io
 import logging
 import math
-import datetime
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
@@ -16,8 +15,7 @@ from reportlab.platypus import (
 from django.utils import timezone
 from django.template.defaultfilters import date as date_filter
 
-from hamed.exports.common import (get_lieu_naissance, get_lieu, get_other,
-                                  get_date, get_dob, get_nom)
+from hamed.exports.common import get_lieu_naissance, get_dob, get_nom
 
 BLANK = "néant"
 logger = logging.getLogger(__name__)
@@ -37,8 +35,8 @@ def gen_indigence_certificate_pdf(target):
         x = doc.width + doc.rightMargin
         y = math.ceil(doc.height * 0.9)
         canvas.saveState()
-        canvas.drawImage(
-            ImageReader(target.get_qrcode()), x - qrsize / 2, y, qrsize, qrsize)
+        canvas.drawImage(ImageReader(target.get_qrcode()), x - qrsize / 2, y,
+                         qrsize, qrsize)
         canvas.drawCentredString(x, y, text)
         canvas.restoreState()
 
@@ -64,15 +62,15 @@ def gen_indigence_certificate_pdf(target):
         instance, p='enquete/filiation/', s='-pere')
     nom_mere, prenoms_mere, name_mere = get_nom(
         instance, p='enquete/filiation/', s='-mere')
-    situation_matrioniale = instance.get(
-        'enquete/situation-matrimoniale', BLANK)
-    profession = get_other(instance, 'enquete/profession')
+    # situation_matrioniale = instance.get(
+    #     'enquete/situation-matrimoniale', BLANK)
+    # profession = get_other(instance, 'enquete/profession')
     adresse = instance.get('enquete/adresse', BLANK)
     cercle = target.collect.cercle
     commune = target.collect.commune
     localisation_enquete = instance.get("localisation-enquete/lieu_village")
 
-    headers = [["MINISTERE DE L'ADMINISTRATION", "", "",  "REPUBLIQUE DU MALI"],
+    headers = [["MINISTERE DE L'ADMINISTRATION", "", "", "REPUBLIQUE DU MALI"],
                ["TERRITORIALE DE LA DECENTRALISATION",
                    "", "", "Un Peuple Un But Une Foi"],
                ["ET DE LA REFORME DE L'ETAT", "", "", "**" * 10],
@@ -91,24 +89,28 @@ def gen_indigence_certificate_pdf(target):
         """Je soussigné, {non_maire}, maire de la commune de {name_commune}
         cercle de {name_cercle} certifie que le nommé {name}, {naissance}
         à {lieu_naissance}, {titre_enquete} de {name_pere} et de {name_mere},
-        domicilié à {village_enquete} «{adresse}» <b>est indigent.</b>""".format(
-        non_maire=target.collect.mayor, name_commune=commune, name=name,
-        name_cercle=cercle, naissance=naissance, lieu_naissance=lieu_naissance,
-        titre_enquete="fille " if is_female else "fils ", name_pere=name_pere,
-        name_mere=name_mere, village_enquete=localisation_enquete, adresse=adresse.lower())))
+        domicilié à {village_enquete} «{adresse}» <b>est indigent.</b>
+        """.format(non_maire=target.collect.mayor, name_commune=commune,
+                   name=name, name_cercle=cercle, naissance=naissance,
+                   lieu_naissance=lieu_naissance,
+                   titre_enquete="fille " if is_female else "fils ",
+                   name_pere=name_pere, name_mere=name_mere,
+                   village_enquete=localisation_enquete,
+                   adresse=adresse.lower())))
     # story.append(draw_paragraph(
-    #     "<b>NB : </b> {}".format("Ce certificat d'indigence est valable pour "
+    #    "<b>NB : </b> {}".format("Ce certificat d'indigence est valable pour "
     #         "une durée de six (6) mois à compter de sa date de signature.")))
-    story.append(draw_paragraph("En foi de quoi, je lui délivre le présent "
-        "certificat pour servir et faire valoir ce que de droit."))
-    story.append(draw_paragraph("<b>Bamako, le</b> {}".format(date_filter(
-        timezone.now())), align="right"))
+    story.append(
+        draw_paragraph("En foi de quoi, je lui délivre le présent certificat "
+                       "pour servir et faire valoir ce que de droit."))
+    story.append(draw_paragraph("<b>{commune}, le</b> {date}".format(
+        commune=commune, date=date_filter(timezone.now())), align="right"))
     story.append(draw_paragraph("Le Maire", align="right"))
     story.append(draw_paragraph("<b><u>Ampliations</u></b>"))
     story.append(draw_paragraph("Service du Développement Social ........ 1"))
     story.append(draw_paragraph(
         "Intéressé{} ............................................. 1".format(
-                                                    "e" if is_female else "")))
+            "e" if is_female else "")))
     story.append(draw_paragraph(
                  "Chrono et Archives................................ 2"))
 
