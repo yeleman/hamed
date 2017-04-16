@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 def gen_social_survey_pdf(target):
     instance = target.dataset
+    logger.debug("TARGET: {} - {} - {}"
+                 .format(target.name(), target.first_name, target.last_name))
     pdf_form = io.BytesIO()
 
     style = getSampleStyleSheet()["Normal"]
@@ -378,8 +380,11 @@ def gen_social_survey_pdf(target):
                                             recommande_assistance_text)))
 
     sig_attachment = target.get_attachment('signature')
-    signature = download_media(sig_attachment.get('download_url'))
-    signature_img = Image(signature, width=80, height=82)
+    if sig_attachment:
+        signature = download_media(sig_attachment.get('download_url'))
+        signature_img = Image(signature, width=80, height=82)
+    else:
+        signature_img = ""
     signature = [["SIGNATURE DE L’ENQUÊTEUR", "", "",
                   "VISA DU CHEF DU SERVICE SOCIAL"], [signature_img, ""]]
     signature_t = Table(signature, rowHeights=80, colWidths=110)
