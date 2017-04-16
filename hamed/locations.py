@@ -12,6 +12,7 @@ CERCLES = {
         "name": "SIKASSO",
         "id": "15",
         "communes": {
+            "2470": {"id": "2470", "name": "SIKASSO"},
             "248": {"id": "248", "name": "FARAKALA"},
             "249": {"id": "249", "name": "FINKOLO"},
             "250": {"id": "250", "name": "FINKOLO GANADOUGOU"},
