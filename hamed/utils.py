@@ -292,8 +292,10 @@ def unshare_form(form_pk):
 
 
 def upload_export_data(collect):
-    url = "/".join([Settings.upload_server(), "upload"])
-    req = requests.post(url=url, json=collect.export_data())
+    url = "/".join([Settings.upload_server(), "api", "upload"])
+    headers = {'Authorization': "Token {}".format(Settings.upload_token())}
+    req = requests.post(url=url, json=collect.export_data(),
+                        headers=headers, verify=False)
     try:
         assert req.status_code == 200
     except AssertionError:
@@ -302,7 +304,7 @@ def upload_export_data(collect):
         assert req.json()['status'] == 'success'
     except:
         raise AssertionError(
-            "Unsucessful reply from server: ".format(req.text))
+            "Unsucessful reply from server: {}".format(req.text))
     collect.mark_uploaded(req.json())
     return req.json()
 

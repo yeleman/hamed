@@ -41,8 +41,16 @@
 {
   "fields": {
   	"key": "upload-server",
-    "value": "https://ramed.ml"
+    "value": "http://receiver.anam-mali.org:8080"
   },
   "model": "hamed.Settings",
   "pk": 5
+},
+{
+  "fields": {
+  	"key": "upload-token",
+    "value": "NOT SET"
+  },
+  "model": "hamed.Settings",
+  "pk": 6
 }]

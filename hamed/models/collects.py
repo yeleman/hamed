@@ -111,7 +111,7 @@ class Collect(models.Model):
             if getattr(self, dkey):
                 data.update({dkey: getattr(self, dkey).isoformat()})
 
-        for key in ('cercle_id', 'commune_id',
+        for key in ('cercle_id', 'commune_id', 'suffix',
                     'ona_form_pk', 'ona_scan_form_pk',
                     'nb_submissions', 'nb_indigents', 'nb_non_indigents',
                     'nb_medias_form', 'nb_medias_scan_form',
