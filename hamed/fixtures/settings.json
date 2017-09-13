@@ -41,7 +41,7 @@
 {
   "fields": {
   	"key": "upload-server",
-    "value": "http://receiver.anam-mali.org:8080"
+    "value": "https://receiver.anam-mali.org:8443"
   },
   "model": "hamed.Settings",
   "pk": 5
