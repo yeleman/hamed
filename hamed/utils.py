@@ -2,23 +2,24 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
-import logging
 import io
-import csv
 import os
-import json
+import csv
 import sys
+import lzma
+import json
+import string
+import logging
 import tempfile
 import datetime
-import string
 import unicodedata
 
 import sh
-import humanfriendly
 import requests
+import humanfriendly
 from path import Path as P
-from django.db.models import QuerySet
 from django.conf import settings
+from django.db.models import QuerySet
 
 from hamed.exports.pdf.social_survey import gen_social_survey_pdf
 from hamed.exports.pdf.indigence_certificate import \
@@ -291,11 +292,30 @@ def unshare_form(form_pk):
                             role=READONLY_ROLE)
 
 
-def upload_export_data(collect):
-    url = "/".join([Settings.upload_server(), "api", "upload"])
-    headers = {'Authorization': "Token {}".format(Settings.upload_token())}
-    req = requests.post(url=url, json=collect.export_data(),
-                        headers=headers, verify=False)
+def upload_export_data(collect, compressed=True):
+
+    req = do_upload_export_data(server_url=Settings.upload_server(),
+                                token=Settings.upload_token(),
+                                data=collect.export_data(),
+                                compressed=compressed)
+    collect.mark_uploaded(req.json())
+    return req.json()
+
+
+def do_upload_export_data(server_url, token, data, compressed=True):
+    url = "/".join([server_url, "api", "upload"])
+    headers = {'Authorization': "Token {}".format(token)}
+
+    if compressed:
+        xz_data = lzma.compress(bytes(json.dumps(data), 'UTF-8'))
+        files = {'xzfile': ('data.json.xz', xz_data,
+                            'application/x-xz; charset=binary')}
+
+        req = requests.post(url=url, files=files,
+                            headers=headers, verify=False)
+    else:
+        req = requests.post(url=url, json=data, headers=headers, verify=False)
+
     try:
         assert req.status_code == 200
     except AssertionError:
@@ -305,8 +325,7 @@ def upload_export_data(collect):
     except:
         raise AssertionError(
             "Unsucessful reply from server: {}".format(req.text))
-    collect.mark_uploaded(req.json())
-    return req.json()
+    return req
 
 
 def list_files(folder):
