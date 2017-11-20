@@ -352,7 +352,10 @@ class Collect(models.Model):
         for submission in data:
             # find target and mark as indigent
             target = Target.get_or_none(submission.get('ident'))
-            assert target is not None
+            if target is None:
+                logger.error("IDENT #{} is not in a target"
+                             .format(submission.get('ident')))
+                continue
 
             # include new attachments to counters
             attachments = submission.get('_attachments', [])
