@@ -113,18 +113,18 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 </div>
 
 
-{% if collect.has_ended  and collect.nb_submissions %}
+{% if collect.has_ended and collect.nb_submissions %}
 <h2>Impression des documents</h2>
 <p><button id="open-folder" class="btn btn-default"><span class="glyphicon glyphicon-print"></span> Voir les PDF à imprimer</button></p>
 <p class="setting">{{ collect.get_documents_path }}</a></p>
-{% endif %}
 
-{% if collect.has_finalized %}
 <h2>Export des données</h2>
 <p><a href="{% url 'collect_exports' collect.id 'xlsx' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Télécharger l'export Excel</button></a></p>
 <h3>Données brutes ANAM</h3>
 <p><button id="upload-anam" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> Télétransmission ANAM</button>  <a href="{% url 'collect_exports' collect.id 'json' %}"><button class="btn btn-default"><span class="glyphicon glyphicon-file"></span> Export brut ANAM pour envoi manuel</button></a></p>
+{% endif %}
 
+{% if collect.has_finalized %}
 <h3>Fichiers médias</h3>
 <p><button id="export-usb" {% if not disk %}disabled="disabled"{% endif %} class="btn btn-default"><span class="glyphicon glyphicon-picture"></span> <span class="glyphicon glyphicon-hdd"></span> Copier les médias sur clé <strong><span class="label alert-{% if disk %}info{% else %}danger{% endif %}">{{ disk_name }}</span></strong></button></p>
 {% endif %}
