@@ -320,6 +320,8 @@ class Target(models.Model):
 
     def export_data(self):
         data = self.dataset.copy()
+        if "ident" not in data.keys():
+            data.update({"ident": self.identifier})
         data.update({'_hamed_attachments': self.attachments()})
         return data
 
