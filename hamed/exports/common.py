@@ -43,7 +43,7 @@ def get_int(data, key, default=0):
     try:
         return int(data.get(key, default))
     except Exception as e:
-        logger.info(e)
+        logger.debug(e)
         return default
 
 

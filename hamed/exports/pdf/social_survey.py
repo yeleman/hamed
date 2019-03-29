@@ -71,7 +71,7 @@ def gen_social_survey_pdf(target):
     # nb_epouses = get_int(instance, 'nb_epouses')
 
     # enfants
-    logger.info("enfants")
+    logger.debug("enfants")
     # nb_enfants = get_int(instance, 'nb_enfants', 0)
     # nb_enfants_handicapes = get_int(instance, 'nb_enfants_handicapes', 0)
     # nb_enfants_acharge = get_int(instance, 'nb_enfants_acharge', 0)
@@ -165,7 +165,7 @@ def gen_social_survey_pdf(target):
             indent=indent, label=label, text=text), style)
 
     doc = SimpleDocTemplate(pdf_form, pagesize=A4, leftMargin=35)
-    logger.info("Headers")
+    logger.debug("Headers")
     headers = [["MINISTÈRE DE LA SOLIDARITÉ", "", "", "REPUBLIQUE DU MALI"],
                ["DE L’ACTION HUMANITAIRE", "", "", "Un Peuple Un But Une Foi"],
                # ["ET DE LA RECONSTRUCTION DU NORD", "", "", ""],
@@ -192,13 +192,13 @@ def gen_social_survey_pdf(target):
                                 get_label_for('demandeur', demandeur)))
     story.append(draw_paragraph_sub_title_h2(
         "Enquêté{}".format("e" if is_female else "")))
-    logger.info("Enquêté")
+    logger.debug("Enquêté")
     story.append(draw_paragraph("Concernant", concat([
         name, "Homme" if sexe == "masculin" else "Femme", get_label_for(
                  "situation-matrimoniale", situation_matrimoniale)])))
     story.append(draw_paragraph("Naissance",
                  "{} à {}".format(date_or_year, lieu_naissance)))
-    logger.info("Parent")
+    logger.debug("Parent")
     story.append(draw_paragraph("N° NINA", nina))
     story.append(draw_paragraph("",
                  concat(["{} {}".format(style_label("Père"), name_pere),
@@ -211,7 +211,7 @@ def gen_social_survey_pdf(target):
     story.append(draw_paragraph_sub_title_h2("COMPOSITION DE LA FAMILLE"))
     story.append(draw_paragraph_sub_title_h3("Situation des épouses"))
     epouses = instance.get('epouses', [])
-    logger.info("Epouses")
+    logger.debug("Epouses")
     if epouses == []:
         story.append(draw_paragraph("", BLANK))
     else:
