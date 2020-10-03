@@ -1,10 +1,10 @@
 Django==1.10.5
 jsonfield==1.0.3
 openpyxl==2.4.2
-Pillow==4.0.0
+Pillow>=4.0.0
 qrcode==5.3
-reportlab==3.3.0
-requests==2.13.0
+reportlab>=3.3.0
+requests>=2.13.0
 ipython==5.2.2
 Path.py==10.1
 pyxform==0.9.24
