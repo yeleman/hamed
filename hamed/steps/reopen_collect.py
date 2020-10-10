@@ -69,6 +69,9 @@ class ResetONAData(Task):
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
+        if not self.output.get("data"):
+            logger.error("data not in output")
+            return
         self.kwargs["collect"].process_form_data(self.output["data"])
 
 

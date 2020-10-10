@@ -304,7 +304,7 @@ class Target(models.Model):
                 continue
             if isinstance(attachment, list):
                 for person in attachment:
-                    for pattach_key, pattachment in person.items():
+                    for _, pattachment in person.items():
                         al.append(pattachment)
             else:
                 al.append(attachment)

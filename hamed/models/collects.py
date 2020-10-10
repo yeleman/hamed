@@ -350,8 +350,12 @@ class Collect(models.Model):
         for target in self.targets.all():
             target.remove_completely(delete_submissions=delete_submissions)
         self.nb_submissions = None
+        self.nb_indigents = None
+        self.nb_non_indigents = None
         self.nb_medias_form = None
+        self.nb_medias_scan_form = None
         self.medias_size_form = None
+        self.medias_size_scan_form = None
         self.save()
 
     def process_scan_form_data(self, data):
@@ -382,14 +386,17 @@ class Collect(models.Model):
         self.nb_medias_scan_form = nb_medias
         self.medias_size_scan_form = medias_size
         self.nb_submissions = self.targets.count()
+
+        # set all other target as indigent (new default status)
+        for target in self.targets.filter(is_indigent__isnull=True):
+            target.is_indigent = True
+            if not target.scan_form_dataset:
+                target.scan_form_dataset = {}
+            target.save()
+
         self.nb_indigents = self.indigents.count()
         self.nb_non_indigents = self.nb_submissions - self.nb_indigents
         self.save()
-
-        # set all other target as refused (non-indigent)
-        for target in self.targets.filter(is_indigent__isnull=True):
-            target.is_indigent = False
-            target.save()
 
     def reset_scan_form_data(self, delete_submissions=False):
         # remove indigent
