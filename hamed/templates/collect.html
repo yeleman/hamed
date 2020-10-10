@@ -70,6 +70,10 @@ ONA pk: {{ collect.ona_scan_form_pk }}">ONA</a>:</dt>
 {% endif %}
 
 <hr />
+{% if collect.get_prev_step %}
+<h2>Étape précédente</h2>
+<button type="button" class="btn btn-default prev-action-trigger"><img style="width: 1.5em;" src="{% static "icons/" %}{{ collect.get_prev_step.icon }}.svg" %}"> {{ collect.get_prev_step.label }}</button>
+{% endif %}
 {% if collect.get_next_step %}
 <h2>Prochaine étape</h2>
 <button type="button" class="btn btn-default action-trigger"><img style="width: 1.5em;" src="{% static "icons/" %}{{ collect.get_next_step.icon }}.svg" %}"> {{ collect.get_next_step.label }}</button>
@@ -173,7 +177,7 @@ function postWithLoading(url, title, reload, callback) {
 
 		// callback
 		try { callback(); } catch (e) { console.error(e); }
-		
+
 		// refresh page to display new info + message
 		if (reload) {
 			location.reload();
@@ -185,6 +189,13 @@ $('button.action-trigger').on('click', function(e) {
 	postWithLoading(
 		"{{ collect.get_next_step.url }}",
 		"{{ collect.get_next_step.label }}",
+		true);
+});
+
+$('button.prev-action-trigger').on('click', function(e) {
+	postWithLoading(
+		"{{ collect.get_prev_step.url }}",
+		"{{ collect.get_prev_step.label }}",
 		true);
 });
 
@@ -243,7 +254,7 @@ $('#export-usb').on('click', function () {
 				cssName = 'default';
 				break;
 		}
-		
+
 		// apply style based on feedback
 		$('#usb-modal #feedback')
 			.removeClass("alert-danger alert-info alert-success alert-warning")
@@ -271,7 +282,7 @@ $('#export-usb').on('click', function () {
 	function failUI(message) {
 		updateUI(100, 'failed', message);
 	}
-	
+
 	$('#usb-modal').modal({backdrop: "static", "keybord": false, show: true});
 	var websocket;
 
@@ -307,7 +318,7 @@ $('#export-usb').on('click', function () {
 		// console.log("message: " + message);
 		// console.log(evt.data);
 		// console.log(data);
-		
+
 		writeToScreen("response: " + evt.data + '\n');
 
 		updateUI(progress, status, message);
@@ -343,7 +354,7 @@ $('#export-usb').on('click', function () {
 	$('#usb-modal button').on('click', function () {
 		resetUI();
 	});
-	
+
 	// connect to WS
 	doConnect("ws://{{ WS_SERVER }}");
 });

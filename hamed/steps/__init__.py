@@ -81,13 +81,15 @@ class Task(BaseTask):
 
             # ensure any required data is present
             for key in self.required_inputs:
-                assert key in self.kwargs.keys()
+                if key not in self.kwargs.keys():
+                    raise Exception("required_input missing: {}".format(key))
 
             self._process()
 
             # ensure all required output has been created
             for key in self.required_outputs:
-                assert key in self.output.keys()
+                if key not in self.output.keys():
+                    raise Exception("required_output missing: {}".format(key))
 
         except Exception as exp:
             logger.error("Exception while processing {}".format(self.name))

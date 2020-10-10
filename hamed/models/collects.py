@@ -281,6 +281,16 @@ class Collect(models.Model):
         for _ in range(0, nb_steps):
             updown()
 
+    def get_prev_step(self):
+        if self.status == self.ENDED:
+            url = reverse('reopen_collect',
+                          kwargs={'collect_id': self.id})
+            label = "Ré-ouvrir la collecte"
+            icon = 'reopen'
+        else:
+            return None
+        return {'url': url, 'label': label, 'icon': icon}
+
     def get_next_step(self):
         # find out next step
         if self.status == self.STARTED:

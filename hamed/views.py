@@ -22,6 +22,7 @@ from hamed.ona import get_form_detail, download_media
 from hamed.steps.start_collect import StartCollectTaskCollection
 from hamed.steps.end_collect import EndCollectTaskCollection
 from hamed.steps.finalize_collect import FinalizeCollectTaskCollection
+from hamed.steps.reopen_collect import ReopenCollectTaskCollection
 from hamed.locations import get_communes
 from hamed.utils import (get_export_fname, MIMES, upload_export_data,
                          find_export_disk, parse_parted_info,
@@ -250,6 +251,34 @@ def finalize_collect(request, collect_id):
                     .format(tc.exception))
     else:
         return fail("Impossible de finaliser la collecte. "
+                    "Collecte retournée à l'état précédent. (exp: {})"
+                    .format(tc.exception))
+
+
+@require_POST
+def reopen_collect(request, collect_id):
+
+    collect = Collect.get_or_none(collect_id)
+    if collect is None:
+        raise Http404("Aucune collecte avec l'ID `{}`".format(collect_id))
+
+    def fail(message):
+        messages.error(request, message)
+        return JsonResponse({'status': 'error', 'message': message})
+
+    tc = ReopenCollectTaskCollection(collect=collect)
+    tc.process()
+    if tc.successful:
+        message = "Collecte «{}» ré-ouverte.".format(collect)
+        messages.success(request, message)
+        return JsonResponse({'status': 'success', 'message': message})
+    elif not tc.clean_state:
+        return fail("Impossible de ré-ouvrir la collecte. "
+                    "Erreur lors de la tentative "
+                    "de retour à l'état précédent : {}"
+                    .format(tc.exception))
+    else:
+        return fail("Impossible de ré-ouvrir la collecte. "
                     "Collecte retournée à l'état précédent. (exp: {})"
                     .format(tc.exception))
 

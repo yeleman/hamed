@@ -19,6 +19,8 @@ urlpatterns = [
         name='end_collect'),
     url(r'^finalize/(?P<collect_id>[0-9]+)/?$', views.finalize_collect,
         name='finalize_collect'),
+    url(r'^reopen/(?P<collect_id>[0-9]+)/?$', views.reopen_collect,
+        name='reopen_collect'),
     url(r'attachment/(?P<fname>[a-zA-Z0-9\-\_\.]+)', views.attachment_proxy,
         name='attachment'),
 
