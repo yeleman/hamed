@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
+import sys
 import logging
+import traceback
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,8 @@ class BaseTask(object):
     status = NOT_STARTED
     processing_exception = None
     reverting_exception = None
+    processing_traceback = None
+    reverting_traceback = None
     kwargs = {}
     output = {}
 
@@ -61,6 +65,15 @@ class BaseTask(object):
             return self.processing_exception
         elif self.status == self.ERROR:
             return self.reverting_exception
+        else:
+            return None
+
+    @property
+    def traceback(self):
+        if self.status in (self.FAILED, self.REVERTING, self.REVERTED):
+            return self.processing_traceback
+        elif self.status == self.ERROR:
+            return self.reverting_traceback
         else:
             return None
 
@@ -95,6 +108,7 @@ class Task(BaseTask):
             logger.error("Exception while processing {}".format(self.name))
             logger.exception(exp)
             self.processing_exception = exp
+            self.processing_traceback = traceback.format_exc()
             self.update_status(self.FAILED)
             self.revert()
         else:
@@ -111,6 +125,7 @@ class Task(BaseTask):
             logger.error("Exception while reverting {}".format(self.name))
             logger.exception(exp)
             self.reverting_exception = exp
+            self.reverting_traceback = traceback.format_exc()
             self.update_status(self.ERROR)
         else:
             logger.info("Successfuly reverted {}".format(self.name))
@@ -163,9 +178,11 @@ class TaskCollection(BaseTask):
                 except Exception as exp:
                     if task.processing_exception:
                         exp = task.processing_exception
+                        tb = task.processing_traceback
                     logger.error(
                         "Failed to process task #{}: {}".format(index, exp))
                     self.processing_exception = exp
+                    self.processing_traceback = tb
                     raise TaskFailed()
                 else:
                     # update outputs to include task's output
@@ -193,6 +210,7 @@ class TaskCollection(BaseTask):
                         task.revert()
                     except Exception as exp:
                         self.reverting_exception = exp
+                        self.reverting_traceback = traceback.format_exc()
                         logger.error("Failed to revert task #{}."
                                      .format(rb_index))
                         raise TaskFailed()

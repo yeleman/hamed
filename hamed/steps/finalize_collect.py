@@ -4,12 +4,12 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 from hamed.steps import Task, TaskCollection
 from hamed.ona import (disable_form, enable_form, get_form_data)
 from hamed.utils import (export_collect_data, remove_exported_collect_data,
                          remove_collect_medias, export_collect_medias)
+
+logger = logging.getLogger(__name__)
 
 
 class DisableONAScanForm(Task):

@@ -4,8 +4,6 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 from hamed.steps import Task, TaskCollection
 from hamed.exports.xlsx.xlsform import gen_xlsform
 from hamed.ona import (upload_xlsform, delete_form, disable_form, enable_form,
@@ -13,6 +11,8 @@ from hamed.ona import (upload_xlsform, delete_form, disable_form, enable_form,
                        delete_media, get_media_id)
 from hamed.utils import (gen_targets_documents, remove_targets_documents,
                          share_form, unshare_form)
+
+logger = logging.getLogger(__name__)
 
 
 class DisableONAForm(Task):
