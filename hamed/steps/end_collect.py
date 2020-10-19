@@ -47,7 +47,7 @@ class AddONADataToCollect(Task):
 
     def _process(self):
         ''' populate Collect with retrieved data and create Targets '''
-        self.kwargs['collect'].process_form_data(self.output['data'])
+        self.kwargs['collect'].process_form_data(self.kwargs['data'])
 
     def _revert(self):
         ''' delete created targets and empty data-fields on Collect '''

@@ -37,11 +37,12 @@ class BaseTask(object):
     reverting_exception = None
     processing_traceback = None
     reverting_traceback = None
-    kwargs = {}
-    output = {}
+    # kwargs = {}
+    # output = {}
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
+        self.output = {}
 
     @property
     def name(self):
@@ -187,7 +188,6 @@ class TaskCollection(BaseTask):
                 else:
                     # update outputs to include task's output
                     self.inputs.update(task.output)
-                    self.output.update(task.output)
                     logger.info("Successfuly processed task #{}".format(index))
         except TaskFailed:
             self.revert(index)
