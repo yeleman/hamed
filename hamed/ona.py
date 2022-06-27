@@ -10,13 +10,15 @@ import requests
 from hamed.models.settings import Settings
 from hamed.exceptions import ONAAPIError
 
-ONA_API = '/api/v1'
-ONA_MEDIA = '/media'
-XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml' \
-            '.sheet; charset=binary'
-CSV_MIME = 'text/plain; charset=utf-8'
-DATAENTRY_ROLE = 'dataentry-only'
-READONLY_ROLE = 'readonly-no-download'
+ONA_API = "/api/v1"
+ONA_MEDIA = "/media"
+XLSX_MIME = (
+    "application/vnd.openxmlformats-officedocument.spreadsheetml"
+    ".sheet; charset=binary"
+)
+CSV_MIME = "text/plain; charset=utf-8"
+DATAENTRY_ROLE = "dataentry-only"
+READONLY_ROLE = "readonly-no-download"
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +28,11 @@ def get_base_url():
 
 
 def get_url(path):
-    return ''.join([get_base_url(), path])
+    return "".join([get_base_url(), path])
 
 
 def get_api_path(path):
-    return ''.join([ONA_API, path])
+    return "".join([ONA_API, path])
 
 
 def get_username():
@@ -38,64 +40,146 @@ def get_username():
 
 
 def get_auth_header():
-    return {'Authorization': "Token {token}".format(
-        token=Settings.get_or_none(Settings.ONA_TOKEN).value)}
+    return {
+        "Authorization": "Token {token}".format(
+            token=Settings.get_or_none(Settings.ONA_TOKEN).value
+        )
+    }
 
 
-def post(path, payload={}, headers={}, files={}, params={},
-         expected_codes=(200, 201), as_json=True, as_bytes=False,
-         silent_failure=False):
-    return request(method='POST', path=path, payload=payload, params=params,
-                   headers=headers, files=files,
-                   expected_codes=expected_codes,
-                   as_json=as_json, as_bytes=as_bytes,
-                   silent_failure=silent_failure)
+def post(
+    path,
+    payload={},
+    headers={},
+    files={},
+    params={},
+    expected_codes=(200, 201),
+    as_json=True,
+    as_bytes=False,
+    silent_failure=False,
+):
+    return request(
+        method="POST",
+        path=path,
+        payload=payload,
+        params=params,
+        headers=headers,
+        files=files,
+        expected_codes=expected_codes,
+        as_json=as_json,
+        as_bytes=as_bytes,
+        silent_failure=silent_failure,
+    )
 
 
-def patch(path, payload={}, headers={}, files={}, params={},
-          expected_codes=(200, 201), as_json=True, as_bytes=False,
-          silent_failure=False):
-    return request(method='PATCH', path=path, payload=payload, params=params,
-                   headers=headers, files=files,
-                   expected_codes=expected_codes,
-                   as_json=as_json, as_bytes=as_bytes,
-                   silent_failure=silent_failure)
+def patch(
+    path,
+    payload={},
+    headers={},
+    files={},
+    params={},
+    expected_codes=(200, 201),
+    as_json=True,
+    as_bytes=False,
+    silent_failure=False,
+):
+    return request(
+        method="PATCH",
+        path=path,
+        payload=payload,
+        params=params,
+        headers=headers,
+        files=files,
+        expected_codes=expected_codes,
+        as_json=as_json,
+        as_bytes=as_bytes,
+        silent_failure=silent_failure,
+    )
 
 
-def delete(path, payload={}, headers={}, files={}, params={},
-           expected_codes=(200, 201), as_json=False, as_bytes=False,
-           silent_failure=False):
-    return request(method='DELETE', path=path, payload=payload, params=params,
-                   headers=headers, files=files,
-                   expected_codes=expected_codes,
-                   as_json=as_json, as_bytes=as_bytes,
-                   silent_failure=silent_failure)
+def delete(
+    path,
+    payload={},
+    headers={},
+    files={},
+    params={},
+    expected_codes=(200, 201),
+    as_json=False,
+    as_bytes=False,
+    silent_failure=False,
+):
+    return request(
+        method="DELETE",
+        path=path,
+        payload=payload,
+        params=params,
+        headers=headers,
+        files=files,
+        expected_codes=expected_codes,
+        as_json=as_json,
+        as_bytes=as_bytes,
+        silent_failure=silent_failure,
+    )
 
 
-def get(path, payload={}, headers={}, files={}, params={},
-        expected_codes=(200, 204), as_json=True, as_bytes=False,
-        silent_failure=False):
-    return request(method='GET', path=path,
-                   payload=payload, params=params,
-                   headers=headers, files=files,
-                   expected_codes=expected_codes,
-                   as_json=as_json, as_bytes=as_bytes,
-                   silent_failure=silent_failure)
+def get(
+    path,
+    payload={},
+    headers={},
+    files={},
+    params={},
+    expected_codes=(200, 204),
+    as_json=True,
+    as_bytes=False,
+    silent_failure=False,
+):
+    return request(
+        method="GET",
+        path=path,
+        payload=payload,
+        params=params,
+        headers=headers,
+        files=files,
+        expected_codes=expected_codes,
+        as_json=as_json,
+        as_bytes=as_bytes,
+        silent_failure=silent_failure,
+    )
 
 
-def request(method, path, payload={}, headers={}, files={}, params={},
-            expected_codes=(200, 201, 204), as_json=True, as_bytes=False,
-            timeout=60,
-            silent_failure=False):
+def request(
+    method,
+    path,
+    payload={},
+    headers={},
+    files={},
+    params={},
+    expected_codes=(200, 201, 204),
+    as_json=True,
+    as_bytes=False,
+    timeout=60,
+    silent_failure=False,
+):
     url = get_url(path)
-    methods = {'POST': requests.post, 'DELETE': requests.delete,
-               'GET': requests.get, 'OPTIONS': requests.options,
-               'HEAD': requests.head, 'PUT': requests.put,
-               'PATCH': requests.patch}
+    methods = {
+        "POST": requests.post,
+        "DELETE": requests.delete,
+        "GET": requests.get,
+        "OPTIONS": requests.options,
+        "HEAD": requests.head,
+        "PUT": requests.put,
+        "PATCH": requests.patch,
+    }
     func = methods.get(method, requests.get)
     headers.update(get_auth_header())
-    req = func(url=url, params=params, data=payload,
-               files=files, headers=headers, timeout=timeout)
+    req = func(
+        url=url,
+        params=params,
+        data=payload,
+        files=files,
+        headers=headers,
+        timeout=timeout,
+    )
     # from pprint import pprint as pp ; pp(req.request.url)
     # from pprint import pprint as pp ; pp(req.request.headers)
     try:
@@ -114,31 +198,34 @@ def request(method, path, payload={}, headers={}, files={}, params={},
 
 
 def upload_xlsform(xls_file, silent_failure=False):
-    return post(path=get_api_path('/forms'),
-                files={'xls_file':  ('xform.xlsx', xls_file,
-                                     XLSX_MIME, {'Expires': '0'})},
-                expected_codes=(201,))
+    return post(
+        path=get_api_path("/forms"),
+        files={"xls_file": ("xform.xlsx", xls_file, XLSX_MIME, {"Expires": "0"})},
+        expected_codes=(201,),
+    )
 
 
 def add_role_to_form(form_pk, usernames, role):
-    usernames = ",".join(usernames) \
-        if isinstance(usernames, list) else usernames
+    usernames = ",".join(usernames) if isinstance(usernames, list) else usernames
 
-    return post(path=get_api_path('/forms/{pk}/share'.format(pk=form_pk)),
-                payload={"usernames": usernames, "role": role},
-                expected_codes=(204,), as_json=False)
+    return post(
+        path=get_api_path("/forms/{pk}/share".format(pk=form_pk)),
+        payload={"usernames": usernames, "role": role},
+        expected_codes=(204,),
+        as_json=False,
+    )
 
 
 def get_form_detail(form_pk):
-    return get(get_api_path('/forms/{pk}'.format(pk=form_pk)))
+    return get(get_api_path("/forms/{pk}".format(pk=form_pk)))
 
 
 def toggle_downloadable_ona_form(form_pk, downloadable):
     # TODO: move to patch method
-    url = get_url(get_api_path('/forms/{pk}'.format(pk=form_pk)))
-    req = requests.patch(url=url,
-                         headers=get_auth_header(),
-                         data={'downloadable': downloadable})
+    url = get_url(get_api_path("/forms/{pk}".format(pk=form_pk)))
+    req = requests.patch(
+        url=url, headers=get_auth_header(), data={"downloadable": downloadable}
+    )
     try:
         assert req.status_code == 200
         return req.json()
@@ -157,30 +244,30 @@ def enable_form(form_pk):
 
 
 def delete_form(form_pk):
-    return delete(get_api_path('/forms/{pk}'.format(pk=form_pk)),
-                  expected_codes=(204,), as_json=False)
+    return delete(
+        get_api_path("/forms/{pk}".format(pk=form_pk)),
+        expected_codes=(204,),
+        as_json=False,
+    )
 
 
 def get_form_data(form_pk):
-    return get(get_api_path('/data/{pk}'.format(pk=form_pk)))
+    return get(get_api_path("/data/{pk}".format(pk=form_pk)))
 
 
 def get_media_size(filename):
-    url = get_url('{media}/{fname}'.format(media=ONA_MEDIA,
-                                           fname=filename))
+    url = get_url("{media}/{fname}".format(media=ONA_MEDIA, fname=filename))
     resp = requests.head(url)
-    return int(resp.headers['Content-Length'])
+    return int(resp.headers["Content-Length"])
 
 
 def upload_csv_media(form_pk, media_csv, media_fname):
     return post(
-        path=get_api_path('/metadata.json'),
-        payload={'data_value': media_fname,
-                 'data_type': 'media',
-                 'xform': form_pk},
-        files={'data_file':  (media_fname, media_csv,
-                              CSV_MIME, {'Expires': '0'})},
-        expected_codes=(201,))
+        path=get_api_path("/metadata.json"),
+        payload={"data_value": media_fname, "data_type": "media", "xform": form_pk},
+        files={"data_file": (media_fname, media_csv, CSV_MIME, {"Expires": "0"})},
+        expected_codes=(201,),
+    )
 
 
 def delete_media(collect, media_id):
@@ -194,9 +281,9 @@ def delete_media(collect, media_id):
     path = "/{username}/forms/{form_id}/formid-media/{media_id}".format(
         username=Settings.ona_username(),
         form_id=collect.ona_form_id(),
-        media_id=media_id)
-    resp = session.get(url=get_url(path),
-                       params={"del": "true"})
+        media_id=media_id,
+    )
+    resp = session.get(url=get_url(path), params={"del": "true"})
     assert resp.status_code in (302, 200)
 
 
@@ -217,34 +304,36 @@ def download_media(path):
 
 def get_media_id(form_pk, media_fname):
     resp = get(get_api_path("/metadata.json"), params={"xform": form_pk})
-    filtered = [data for data in resp
-                if data['xform'] == form_pk
-                and data['data_value'] == media_fname]
+    filtered = [
+        data
+        for data in resp
+        if data["xform"] == form_pk and data["data_value"] == media_fname
+    ]
     try:
-        return filtered[0]['id']
+        return filtered[0]["id"]
     except IndexError:
         return None
 
 
 def download_xlsx_export(collect):
-    return download_export_file(collect, 'xlsx')
+    return download_export_file(collect, "xlsx")
 
 
 def download_json_export(collect):
-    return download_export_file(collect, 'json')
+    return download_export_file(collect, "json")
 
 
 def download_export_file(collect, format_extension):
-    url = get_api_path("/data/{pk}.{ext}".format(
-        pk=collect.ona_form_pk, ext=format_extension))
+    url = get_api_path(
+        "/data/{pk}.{ext}".format(pk=collect.ona_form_pk, ext=format_extension)
+    )
     return get(url, as_bytes=True)
 
 
 def delete_submission(form_pk, submission_id):
     return delete(
         params={"force": "true"},
-        path=get_api_path("/data/{pk}/{id}".format(
-            pk=form_pk, id=submission_id)),
+        path=get_api_path("/data/{pk}/{id}".format(pk=form_pk, id=submission_id)),
         expected_codes=(204,),
-        as_json=False
+        as_json=False,
     )

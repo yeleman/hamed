@@ -6,7 +6,6 @@ import re
 
 
 class Instance(dict):
-
     def __init__(self, *args, **kwargs):
         super(Instance, self).__init__(*args, **kwargs)
         self.parse()
@@ -22,25 +21,27 @@ class Instance(dict):
     @classmethod
     def clean_name(cls, lastname, firstnames):
         if firstnames and lastname:
-            return "{lastname} {firstnames}".format(firstnames=firstnames,
-                                                    lastname=lastname)
+            return "{lastname} {firstnames}".format(
+                firstnames=firstnames, lastname=lastname
+            )
         elif firstnames:
             return firstnames
         return lastname
 
     @property
     def firstnames(self):
-        return self.clean_firstnames(self.get('prenoms'))
+        return self.clean_firstnames(self.get("prenoms"))
 
     @property
     def lastname(self):
-        return self.clean_lastname(self.get('nom'))
+        return self.clean_lastname(self.get("nom"))
 
     @property
     def name(self):
         if self.firstnames and self.lastname:
             return "{lastname} {firstnames}".format(
-                firstnames=self.firstnames, lastname=self.lastname)
+                firstnames=self.firstnames, lastname=self.lastname
+            )
         elif self.firstnames:
             return self.firstnames
         return self.lastname
@@ -56,27 +57,31 @@ class Instance(dict):
     @property
     def folder_name(self):
         return "{nom}-{uuid}".format(
-            nom=re.sub(r'\[\]/\;,\>\<\&\*\:\%\=\+\@\!\#\^\(\)\|\?',
-                       '', self.name),
-            uuid=self.uuid)
+            nom=re.sub(r"\[\]/\;,\>\<\&\*\:\%\=\+\@\!\#\^\(\)\|\?", "", self.name),
+            uuid=self.uuid,
+        )
 
     @property
     def region(self):
-        return self.get('region').strip().upper() or None
+        return self.get("region").strip().upper() or None
 
     @property
     def cercle(self):
-        return self.get('cercle').strip().upper() or None
+        return self.get("cercle").strip().upper() or None
 
     @property
     def commune(self):
-        return self.get('commune').strip().upper() or None
+        return self.get("commune").strip().upper() or None
 
     @property
     def location(self):
-        return "/".join([part for part
-                         in (self.commune, self.cercle, self.region)
-                        if part is not None])
+        return "/".join(
+            [
+                part
+                for part in (self.commune, self.cercle, self.region)
+                if part is not None
+            ]
+        )
 
     @property
     def medias(self):
@@ -85,8 +90,7 @@ class Instance(dict):
     def get_medias(self):
         medias = {}
         keys = ("filename", "type", "url")
-        is_media = lambda d: sum([1 for k in keys
-                                  if k in d.keys()]) == len(keys)
+        is_media = lambda d: sum([1 for k in keys if k in d.keys()]) == len(keys)
 
         def walk_dict(adict, parent_key=[]):
             for key, value in adict.items():

@@ -22,30 +22,38 @@ from hamed.locations import get_cercle_name, get_commune_name
 
 logger = logging.getLogger(__name__)
 
-STARTED = 'started'
-ENDED = 'ended'
-FINALIZED = 'finalized'
-STATE_MACHINE = OrderedDict([
-    (STARTED, ("Collecte terrain en cours",
-               StartCollectTaskCollection)),
-    (ENDED, ("Collecte terminée, analyse des données",
-             EndCollectTaskCollection)),
-    (FINALIZED, ("Collecte finalisée avec documents",
-                 FinalizeCollectTaskCollection))
-])
+STARTED = "started"
+ENDED = "ended"
+FINALIZED = "finalized"
+STATE_MACHINE = OrderedDict(
+    [
+        (STARTED, ("Collecte terrain en cours", StartCollectTaskCollection)),
+        (ENDED, ("Collecte terminée, analyse des données", EndCollectTaskCollection)),
+        (
+            FINALIZED,
+            ("Collecte finalisée avec documents", FinalizeCollectTaskCollection),
+        ),
+    ]
+)
 STATUSES = lambda: {k: v[0] for k, v in STATE_MACHINE.items()}
 
 
 class ActiveCollectManager(models.Manager):
     def get_queryset(self):
-        return super(ActiveCollectManager, self).get_queryset() \
+        return (
+            super(ActiveCollectManager, self)
+            .get_queryset()
             .filter(status__in=(Collect.STARTED, Collect.ENDED))
+        )
 
 
 class ArchivedCollectManager(models.Manager):
     def get_queryset(self):
-        return super(ArchivedCollectManager, self).get_queryset() \
+        return (
+            super(ArchivedCollectManager, self)
+            .get_queryset()
             .filter(status=Collect.FINALIZED)
+        )
 
 
 def default_cercle_id():
@@ -58,18 +66,21 @@ class Collect(models.Model):
     ENDED = ENDED
     FINALIZED = FINALIZED
 
-    MAYOR_TITLES = OrderedDict([
-        ('sir', "M."),
-        ('madam', "Mme"),
-        ('doctor', "Dr"),
-    ])
+    MAYOR_TITLES = OrderedDict(
+        [
+            ("sir", "M."),
+            ("madam", "Mme"),
+            ("doctor", "Dr"),
+        ]
+    )
 
     class Meta:
-        unique_together = [('commune_id', 'suffix')]
-        ordering = ['-started_on']
+        unique_together = [("commune_id", "suffix")]
+        ordering = ["-started_on"]
 
-    status = models.CharField(max_length=50, choices=STATUSES().items(),
-                              default=STARTED)
+    status = models.CharField(
+        max_length=50, choices=STATUSES().items(), default=STARTED
+    )
 
     started_on = models.DateTimeField(auto_now_add=True)
     ended_on = models.DateTimeField(blank=True, null=True)
@@ -77,17 +88,18 @@ class Collect(models.Model):
     uploaded_on = models.DateTimeField(blank=True, null=True)
 
     cercle_id = models.CharField(
-        verbose_name="Cercle",
-        max_length=100, default=default_cercle_id)
+        verbose_name="Cercle", max_length=100, default=default_cercle_id
+    )
     commune_id = models.CharField(
         verbose_name="Commune",
-        max_length=100, choices=[],)
+        max_length=100,
+        choices=[],
+    )
     suffix = models.CharField(max_length=50, verbose_name="Suffixe")
-    mayor_title = models.CharField(max_length=50,
-                                   choices=MAYOR_TITLES.items(),
-                                   verbose_name="Titre")
-    mayor_name = models.CharField(max_length=100,
-                                  verbose_name="Nom du maire")
+    mayor_title = models.CharField(
+        max_length=50, choices=MAYOR_TITLES.items(), verbose_name="Titre"
+    )
+    mayor_name = models.CharField(max_length=100, verbose_name="Nom du maire")
 
     ona_form_pk = models.IntegerField(blank=True, null=True)
     ona_scan_form_pk = models.IntegerField(blank=True, null=True)
@@ -107,33 +119,43 @@ class Collect(models.Model):
     def to_dict(self):
         data = {}
 
-        for dkey in ('started_on', 'ended_on', 'finalized_on', 'uploaded_on'):
+        for dkey in ("started_on", "ended_on", "finalized_on", "uploaded_on"):
             if getattr(self, dkey):
                 data.update({dkey: getattr(self, dkey).isoformat()})
 
-        for key in ('cercle_id', 'commune_id', 'suffix',
-                    'ona_form_pk', 'ona_scan_form_pk',
-                    'nb_submissions', 'nb_indigents', 'nb_non_indigents',
-                    'nb_medias_form', 'nb_medias_scan_form',
-                    'medias_size_form', 'medias_size_scan_form'):
+        for key in (
+            "cercle_id",
+            "commune_id",
+            "suffix",
+            "ona_form_pk",
+            "ona_scan_form_pk",
+            "nb_submissions",
+            "nb_indigents",
+            "nb_non_indigents",
+            "nb_medias_form",
+            "nb_medias_scan_form",
+            "medias_size_form",
+            "medias_size_scan_form",
+        ):
             data.update({key: getattr(self, key)})
 
-        data.update({
-            'cercle': self.cercle,
-            'commune': self.commune,
-            'mayor': {
-                'title_code': self.mayor_title,
-                'title': self.verbose_mayor_title,
-                'name': self.mayor_name,
-            },
-            'ona_form_id': self.ona_form_id(),
-            'ona_scan_form_id': self.ona_scan_form_id(),
-        })
+        data.update(
+            {
+                "cercle": self.cercle,
+                "commune": self.commune,
+                "mayor": {
+                    "title_code": self.mayor_title,
+                    "title": self.verbose_mayor_title,
+                    "name": self.mayor_name,
+                },
+                "ona_form_id": self.ona_form_id(),
+                "ona_scan_form_id": self.ona_scan_form_id(),
+            }
+        )
         return data
 
     def name(self):
-        return "E.S {commune} {suffix}".format(
-            commune=self.commune, suffix=self.suffix)
+        return "E.S {commune} {suffix}".format(commune=self.commune, suffix=self.suffix)
 
     @property
     def cercle(self):
@@ -145,16 +167,19 @@ class Collect(models.Model):
 
     @property
     def mayor(self):
-        return "{title} {name}".format(title=self.verbose_mayor_title,
-                                       name=self.mayor_name)
+        return "{title} {name}".format(
+            title=self.verbose_mayor_title, name=self.mayor_name
+        )
 
     def form_title(self):
         return "Enquête sociale {commune}/{suffix}".format(
-            commune=self.commune, suffix=self.suffix)
+            commune=self.commune, suffix=self.suffix
+        )
 
     def scan_form_title(self):
         return "Scan certificats {commune}/{suffix}".format(
-            commune=self.commune, suffix=self.suffix)
+            commune=self.commune, suffix=self.suffix
+        )
 
     def ona_form_id(self):
         return "enquete-sociale-{id}".format(id=self.id)
@@ -168,8 +193,7 @@ class Collect(models.Model):
 
     @property
     def medias_size(self):
-        return sum([self.medias_size_form or 0,
-                    self.medias_size_scan_form or 0])
+        return sum([self.medias_size_form or 0, self.medias_size_scan_form or 0])
 
     @classmethod
     def get_or_none(cls, cid):
@@ -283,29 +307,26 @@ class Collect(models.Model):
 
     def get_prev_step(self):
         if self.status == self.ENDED:
-            url = reverse('reopen_collect',
-                          kwargs={'collect_id': self.id})
+            url = reverse("reopen_collect", kwargs={"collect_id": self.id})
             label = "Ré-ouvrir la collecte"
-            icon = 'reopen'
+            icon = "reopen"
         else:
             return None
-        return {'url': url, 'label': label, 'icon': icon}
+        return {"url": url, "label": label, "icon": icon}
 
     def get_next_step(self):
         # find out next step
         if self.status == self.STARTED:
-            url = reverse('end_collect',
-                          kwargs={'collect_id': self.id})
+            url = reverse("end_collect", kwargs={"collect_id": self.id})
             label = "Cloturer la collecte"
-            icon = 'end'
+            icon = "end"
         elif self.status == self.ENDED:
-            url = reverse('finalize_collect',
-                          kwargs={'collect_id': self.id})
+            url = reverse("finalize_collect", kwargs={"collect_id": self.id})
             label = "Finaliser la collecte"
-            icon = 'finalize'
+            icon = "finalize"
         else:
             return None
-        return {'url': url, 'label': label, 'icon': icon}
+        return {"url": url, "label": label, "icon": icon}
 
     def change_status(self, new_status):
         assert new_status in STATUSES().keys()
@@ -329,17 +350,16 @@ class Collect(models.Model):
         medias_size = 0
         for submission in data:
             # get attachement filesizes
-            attachments = submission.get('_attachments', [])
+            attachments = submission.get("_attachments", [])
             for media in attachments:
-                media['filesize'] = get_media_size(
-                    media.get('filename', ''))
-            submission['_attachments'] = attachments
+                media["filesize"] = get_media_size(media.get("filename", ""))
+            submission["_attachments"] = attachments
 
             # create Target
             Target.create_from_submission(self, submission)
 
             nb_medias += len(attachments)
-            medias_size += sum([m['filesize'] for m in attachments])
+            medias_size += sum([m["filesize"] for m in attachments])
 
         self.nb_submissions = len(data)
         self.nb_medias_form = nb_medias
@@ -365,23 +385,24 @@ class Collect(models.Model):
         medias_size = 0
         for submission in data:
             # find target and mark as indigent
-            target = Target.get_or_none(submission.get('ident'))
+            target = Target.get_or_none(submission.get("ident"))
             if target is None:
-                logger.error("IDENT #{} is not in a target"
-                             .format(submission.get('ident')))
+                logger.error(
+                    "IDENT #{} is not in a target".format(submission.get("ident"))
+                )
                 continue
 
             # include new attachments to counters
-            attachments = submission.get('_attachments', [])
+            attachments = submission.get("_attachments", [])
             for media in attachments:
-                media['filesize'] = get_media_size(media.get('filename', ''))
-            submission['_attachments'] = attachments
+                media["filesize"] = get_media_size(media.get("filename", ""))
+            submission["_attachments"] = attachments
 
             # update target
             target.update_with_scan_submission(submission)
 
             nb_medias += len(attachments)
-            medias_size += sum([m['filesize'] for m in attachments])
+            medias_size += sum([m["filesize"] for m in attachments])
 
         self.nb_medias_scan_form = nb_medias
         self.medias_size_scan_form = medias_size
@@ -414,8 +435,7 @@ class Collect(models.Model):
         return gen_targets_csv(self.targets.all())
 
     def get_documents_path(self):
-        return os.path.join(settings.COLLECT_DOCUMENTS_FOLDER,
-                            self.ona_form_id())
+        return os.path.join(settings.COLLECT_DOCUMENTS_FOLDER, self.ona_form_id())
 
     def get_nb_men(self):
         return self.targets.filter(gender=Target.MALE).count()
@@ -425,7 +445,7 @@ class Collect(models.Model):
 
     def get_median_age(self):
         try:
-            return median([t['age'] for t in self.targets.values('age')])
+            return median([t["age"] for t in self.targets.values("age")])
         except StatisticsError:
             return None
 
@@ -434,9 +454,7 @@ class Collect(models.Model):
 
     def export_data(self):
         data = self.to_dict().copy()
-        data.update({
-            'targets': [t.export_data() for t in self.targets.all()]
-        })
+        data.update({"targets": [t.export_data() for t in self.targets.all()]})
         return data
 
     def mark_uploaded(self, server_response):

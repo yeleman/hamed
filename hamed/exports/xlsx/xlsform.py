@@ -8,8 +8,11 @@ import io
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
-from hamed.exports.xlsx import (IncorrectExcelFile,
-                                letter_to_column, indexes_to_coordinate)
+from hamed.exports.xlsx import (
+    IncorrectExcelFile,
+    letter_to_column,
+    indexes_to_coordinate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +23,11 @@ def gen_xlsform(template_path, form_title, form_id):
     except InvalidFileException:
         raise IncorrectExcelFile("Not a proper XLSX Template.")
 
-    ws = wb['settings']
+    ws = wb["settings"]
 
     # find columns for those settings (or create)
-    form_id_cell = ws.cell(row=2,
-                           column=get_setting_column(ws, 'form_id'))
-    form_title_cell = ws.cell(row=2,
-                              column=get_setting_column(ws, 'form_title'))
+    form_id_cell = ws.cell(row=2, column=get_setting_column(ws, "form_id"))
+    form_title_cell = ws.cell(row=2, column=get_setting_column(ws, "form_title"))
     # set new values
     form_id_cell.value = form_id
     form_title_cell.value = form_title

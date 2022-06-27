@@ -14,21 +14,20 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from hamed.models.collects import Collect
-from hamed.utils import (list_files, find_export_disk, prepare_disk,
-                         unmount_device)
+from hamed.utils import list_files, find_export_disk, prepare_disk, unmount_device
 
-FAILED = 'failed'
-SUCCESS = 'success'
-IN_PROGRESS = 'in-progress'
+FAILED = "failed"
+SUCCESS = "success"
+IN_PROGRESS = "in-progress"
 
 logger = logging.getLogger(__name__)
 clients = []
 
 
 def pgresponse(pc, message, status=IN_PROGRESS):
-    return json.dumps({'progress': pc,
-                       'message': message.replace("\n", "<br />"),
-                       'status': status})
+    return json.dumps(
+        {"progress": pc, "message": message.replace("\n", "<br />"), "status": status}
+    )
 
 
 class CopyProgressTicker(object):
@@ -40,9 +39,10 @@ class CopyProgressTicker(object):
     def tick(self, filename):
         logger.debug("TICK {}".format(filename))
         self.client.sendMessage(
-            pgresponse(self.percentage(),
-                       "Copie de {}".format(filename),
-                       status='in-progress'))
+            pgresponse(
+                self.percentage(), "Copie de {}".format(filename), status="in-progress"
+            )
+        )
         self.nb_copied += 1
 
     def percentage(self):
@@ -50,7 +50,6 @@ class CopyProgressTicker(object):
 
 
 class USBExportProgress(WebSocket):
-
     def __init__(self, *args, **kwargs):
         self.collect = None
         self.device_path = None
@@ -74,9 +73,7 @@ class USBExportProgress(WebSocket):
         self.inform(message)
 
     def inform(self, message):
-        self.sendMessage(pgresponse(self.percentage,
-                                    message,
-                                    self.status))
+        self.sendMessage(pgresponse(self.percentage, message, self.status))
 
     def fail(self, message):
         self.up_inform(100, FAILED, message)
@@ -89,19 +86,19 @@ class USBExportProgress(WebSocket):
             self.fail("bad request")
             return
 
-        if jsd.get('action') == 'start':
-            collect_id = jsd.get('collect_id')
+        if jsd.get("action") == "start":
+            collect_id = jsd.get("collect_id")
             self.collect = Collect.get_or_none(collect_id)
             if self.collect is None:
-                self.fail("Aucune collecte avec cet ID `{}`"
-                          .format(collect_id))
+                self.fail("Aucune collecte avec cet ID `{}`".format(collect_id))
                 return
             logger.info("Received start request for {}".format(self.collect))
 
             self.up_inform(1, IN_PROGRESS, "Préparation de la copie")
 
-            threading.Thread(target=USBExportProgress.find_usb_disk,
-                             args=[self]).start()
+            threading.Thread(
+                target=USBExportProgress.find_usb_disk, args=[self]
+            ).start()
 
     def find_usb_disk(self):
         logger.info("FINDING USB DISK!")
@@ -116,8 +113,7 @@ class USBExportProgress(WebSocket):
             return
         else:
             self.up_inform(5, IN_PROGRESS, "Disque USB trouvé.")
-            threading.Thread(target=USBExportProgress.format_disk,
-                             args=[self]).start()
+            threading.Thread(target=USBExportProgress.format_disk, args=[self]).start()
 
     def format_disk(self):
         self.inform("Formattage du disque USB.")
@@ -126,24 +122,23 @@ class USBExportProgress(WebSocket):
             self.mount_point = prepare_disk(self.device_path)
         except Exception as exp:
             logger.exception(exp)
-            self.fail("Impossible de formatter le disque USB {}"
-                      .format(self.device_path))
+            self.fail(
+                "Impossible de formatter le disque USB {}".format(self.device_path)
+            )
             unmount_device(self.device_path)
             P(self.mount_point).removedirs_p()
             return
         else:
             self.up_inform(10, IN_PROGRESS, "Formattage disque USB terminé.")
             logger.debug("USB preparation complete")
-            threading.Thread(target=USBExportProgress.copy_files,
-                             args=[self]).start()
+            threading.Thread(target=USBExportProgress.copy_files, args=[self]).start()
 
     def copy_files(self):
 
         src = self.collect.get_documents_path()
         dst = self.mount_point
         all_files = list_files(src)
-        ticker = CopyProgressTicker(nb_expected=len(all_files),
-                                    client=self)
+        ticker = CopyProgressTicker(nb_expected=len(all_files), client=self)
 
         errors = []
         self.up_inform(15, IN_PROGRESS, "Copie des fichiers en cours…")
@@ -160,29 +155,34 @@ class USBExportProgress(WebSocket):
                 errors.append((filename, exp))
         if len(errors) == 0:
             self.up_inform(
-                100, SUCCESS,
-                "Copie terminée avec succès: {} fichiers."
-                .format(ticker.nb_expected))
+                100,
+                SUCCESS,
+                "Copie terminée avec succès: {} fichiers.".format(ticker.nb_expected),
+            )
             logger.debug("All files copied")
         else:
-            self.fail("Des erreurs ont eu lieu:\n{errors}".format(
-                errors="\n".join(["{f}: {exp}".format(f=f, exp=ex)
-                                  for f, ex in errors])))
+            self.fail(
+                "Des erreurs ont eu lieu:\n{errors}".format(
+                    errors="\n".join(
+                        ["{f}: {exp}".format(f=f, exp=ex) for f, ex in errors]
+                    )
+                )
+            )
         logger.debug("unmounting and removing USB disk")
         unmount_device(self.device_path)
         P(dst).removedirs_p()
 
     def handleConnected(self):
-        print (self.address, 'connected')
+        print(self.address, "connected")
         for client in clients:
-            client.sendMessage(self.address[0] + u' - connected')
+            client.sendMessage(self.address[0] + " - connected")
         clients.append(self)
 
     def handleClose(self):
         clients.remove(self)
-        print (self.address, 'closed')
+        print(self.address, "closed")
         for client in clients:
-            client.sendMessage(self.address[0] + u' - disconnected')
+            client.sendMessage(self.address[0] + " - disconnected")
 
     @property
     def json_data(self):
@@ -196,12 +196,11 @@ class Command(BaseCommand):
     help = "Generate documents for a Target"
 
     def handle(self, *args, **kwargs):
-        logger.debug("Export server for {}"
-                     .format(settings.COLLECT_DOCUMENTS_FOLDER))
+        logger.debug("Export server for {}".format(settings.COLLECT_DOCUMENTS_FOLDER))
 
         server = SimpleWebSocketServer(
-            '0.0.0.0', settings.WEBSOCKET_SERVER_PORT,
-            USBExportProgress)
+            "0.0.0.0", settings.WEBSOCKET_SERVER_PORT, USBExportProgress
+        )
 
         def close_sig_handler(signal, frame):
             if server is not None:

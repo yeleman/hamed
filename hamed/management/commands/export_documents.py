@@ -18,17 +18,16 @@ class Command(BaseCommand):
     help = "Generate documents for a Target"
 
     def add_arguments(self, parser):
-        parser.add_argument('ident', type=str,
-                            help="Target ident to generate doc for"),
+        parser.add_argument("ident", type=str, help="Target ident to generate doc for"),
 
     def handle(self, *args, **kwargs):
         translation.activate(settings.LANGUAGE_CODE)
-        ident = kwargs.get('ident')
+        ident = kwargs.get("ident")
         target = Target.get_or_none(ident)
         if target is None:
             raise CommandError(
-                "Error: Unable to find Target with ID `{ident}`"
-                .format(ident=ident))
+                "Error: Unable to find Target with ID `{ident}`".format(ident=ident)
+            )
 
         # logger.info(target)
 

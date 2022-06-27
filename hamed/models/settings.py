@@ -10,19 +10,18 @@ logger = logging.getLogger(__name__)
 
 
 class Settings(models.Model):
-
     class Meta:
         verbose_name = "Setting"
         verbose_name_plural = "Settings"
-        ordering = ['key']
+        ordering = ["key"]
 
-    ONA_SERVER = 'ona-server'
-    ONA_USERNAME = 'ona-username'
-    ONA_TOKEN = 'ona-token'
-    CERCLE_ID = 'cercle-id'
-    DATAENTRY_USERNAME = 'dataentry-username'
-    UPLOAD_SERVER = 'upload-server'
-    UPLOAD_TOKEN = 'upload-token'
+    ONA_SERVER = "ona-server"
+    ONA_USERNAME = "ona-username"
+    ONA_TOKEN = "ona-token"
+    CERCLE_ID = "cercle-id"
+    DATAENTRY_USERNAME = "dataentry-username"
+    UPLOAD_SERVER = "upload-server"
+    UPLOAD_TOKEN = "upload-token"
 
     key = models.SlugField(primary_key=True)
     value = models.CharField(max_length=500)

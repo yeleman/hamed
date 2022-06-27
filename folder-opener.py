@@ -14,7 +14,7 @@ PORT = 8000
 
 
 def is_running():
-    p = subprocess.run(['curl', 'http://localhost:{}'.format(PORT)])
+    p = subprocess.run(["curl", "http://localhost:{}".format(PORT)])
     return p.returncode == 0
 
 
@@ -28,14 +28,14 @@ def open_finder_at(abs_path):
 
 
 class FolderRequestHandler(http.server.SimpleHTTPRequestHandler):
-
     def do_GET(self):
-        if not self.path == '/':
+        if not self.path == "/":
             open_finder_at(self.path)
-            self.path = '/'
+            self.path = "/"
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     if not is_running():
         httpd = socketserver.TCPServer(("", PORT), FolderRequestHandler)

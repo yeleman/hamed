@@ -10,38 +10,40 @@ logger = logging.getLogger(__name__)
 
 def build_form_labels(xlsform_path):
     # read XLSForm and feed PyXForm
-    with open(xlsform_path, 'rb') as f:
+    with open(xlsform_path, "rb") as f:
         xlsform = create_survey_from_xls(f)
 
     # retrive JSONForm
     jsonform = xlsform.to_json_dict()
 
     # we'll want labels as {name: label}
-    labelslist2dict = lambda l: {e['name']: e['label'] for e in l}
+    labelslist2dict = lambda l: {e["name"]: e["label"] for e in l}
 
     labels = {}
 
     def walk(node):
         for item in node:
             if isinstance(item, dict):
-                if 'type' in item and item['type'].startswith('select ') \
-                        and 'external' not in item['type']:
-                    labels.update(
-                        {item['name']: labelslist2dict(item['children'])})
-                if 'children' in item:
-                    walk(item['children'])
+                if (
+                    "type" in item
+                    and item["type"].startswith("select ")
+                    and "external" not in item["type"]
+                ):
+                    labels.update({item["name"]: labelslist2dict(item["children"])})
+                if "children" in item:
+                    walk(item["children"])
                 else:
                     walk(item)
             else:
                 pass
 
     # walk through jsonform tree to find select x questions
-    walk(jsonform['children'])
+    walk(jsonform["children"])
 
     return labels
 
 
-LABELS = build_form_labels('hamed/fixtures/enquete-sociale-mobile.xlsx')
+LABELS = build_form_labels("hamed/fixtures/enquete-sociale-mobile.xlsx")
 
 
 def get_label_for(question, value):

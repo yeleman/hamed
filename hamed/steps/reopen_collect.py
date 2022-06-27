@@ -30,11 +30,11 @@ class ReEnableONAForm(Task):
     required_inputs = ["collect"]
 
     def _process(self):
-        """ re-enable form on ONA to allow new submissions """
+        """re-enable form on ONA to allow new submissions"""
         enable_form(self.kwargs["collect"].ona_form_pk)
 
     def _revert(self):
-        """ disable form on ONA to prevent new submission """
+        """disable form on ONA to prevent new submission"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -46,11 +46,11 @@ class RemoveFormData(Task):
     # required_outputs = ["data"]
 
     def _process(self):
-        """ release collected data for form """
+        """release collected data for form"""
         self.release_from_output("data")
 
     def _revert(self):
-        """ retrieve ONA data for form """
+        """retrieve ONA data for form"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -61,11 +61,11 @@ class ResetONAData(Task):
     required_inputs = ["collect"]
 
     def _process(self):
-        """ delete created targets and empty data-fields on Collect """
+        """delete created targets and empty data-fields on Collect"""
         self.kwargs["collect"].reset_form_data()
 
     def _revert(self):
-        """ populate Collect with retrieved data and create Targets """
+        """populate Collect with retrieved data and create Targets"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -79,11 +79,11 @@ class RemoveTargetsDocuments(Task):
     required_inputs = ["collect"]
 
     def _process(self):
-        """ remove generated documents for targets """
+        """remove generated documents for targets"""
         remove_targets_documents(self.kwargs["collect"].targets.all())
 
     def _revert(self):
-        """ generate documents for all targets """
+        """generate documents for all targets"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -95,11 +95,11 @@ class RemoveItemsetsCSV(Task):
     # required_outputs = ["targets_csv"]
 
     def _process(self):
-        """ release generated itemsets CSV for targets """
+        """release generated itemsets CSV for targets"""
         self.release_from_output("targets_csv")
 
     def _revert(self):
-        """ generate itemsets CSV for targets """
+        """generate itemsets CSV for targets"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -111,11 +111,11 @@ class RemoveScanXLSForm(Task):
     # required_outputs = ["xlsx"]
 
     def _process(self):
-        """ release generated XLSForm for scan """
+        """release generated XLSForm for scan"""
         self.release_from_output("xlsx")
 
     def _revert(self):
-        """ generate XLSForm for scan """
+        """generate XLSForm for scan"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -130,7 +130,7 @@ class DeleteONAScanXLSForm(Task):
     required_inputs = ["collect"]
 
     def _process(self):
-        """ remove form on ONA and remove form ID in Collect """
+        """remove form on ONA and remove form ID in Collect"""
         if self.kwargs["collect"].ona_scan_form_pk:
             delete_form(self.kwargs["collect"].ona_scan_form_pk)
 
@@ -138,7 +138,7 @@ class DeleteONAScanXLSForm(Task):
         self.kwargs["collect"].save()
 
     def _revert(self):
-        """ upload scan xlsform to ONA """
+        """upload scan xlsform to ONA"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -153,12 +153,12 @@ class UnshareForm(Task):
     required_inputs = ["collect"]
 
     def _process(self):
-        """ remove agent user permission to submit to form """
+        """remove agent user permission to submit to form"""
         if self.kwargs["collect"].ona_scan_form_pk:
             unshare_form(self.kwargs["collect"].ona_scan_form_pk)
 
     def _revert(self):
-        """ add agent user permission to submit to form """
+        """add agent user permission to submit to form"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -170,7 +170,7 @@ class RemoveItemsetsToONAForm(Task):
     # required_outputs = ["uploaded_csv"]
 
     def _process(self):
-        """ remove itemsets CSV from ONA medias """
+        """remove itemsets CSV from ONA medias"""
         if "uploaded_csv" in self.output:
             delete_media(self.kwargs["collect"], self.output["uploaded_csv"]["id"])
         # in case of cold revert, no output present so no media ID
@@ -182,7 +182,7 @@ class RemoveItemsetsToONAForm(Task):
                 delete_media(self.kwargs["collect"], targets_csv_id)
 
     def _revert(self):
-        """ upload itemsets CSV to ONA as media """
+        """upload itemsets CSV to ONA as media"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return
@@ -197,11 +197,11 @@ class MarkCollectAsStarted(Task):
     required_inputs = ["collect"]
 
     def _process(self):
-        """ return Collect status to STARTED """
+        """return Collect status to STARTED"""
         self.kwargs["collect"].change_status(self.kwargs["collect"].STARTED)
 
     def _revert(self):
-        """ change collect status to ENDED """
+        """change collect status to ENDED"""
         if not self.kwargs.get("collect"):
             logger.error("Collect not in kwargs")
             return

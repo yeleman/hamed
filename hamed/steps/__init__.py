@@ -11,23 +11,25 @@ logger = logging.getLogger(__name__)
 
 
 class BaseTask(object):
-    NOT_STARTED = 'not-started'
-    STARTED = 'started'
-    SUCCESS = 'success'
-    FAILED = 'failed'
-    REVERTING = 'reverting'
-    REVERTED = 'reverted'
-    ERROR = 'error'
+    NOT_STARTED = "not-started"
+    STARTED = "started"
+    SUCCESS = "success"
+    FAILED = "failed"
+    REVERTING = "reverting"
+    REVERTED = "reverted"
+    ERROR = "error"
 
-    STATUSES = OrderedDict([
-        (NOT_STARTED, "Not started"),
-        (STARTED, "Started. In progress"),
-        (SUCCESS, "Completed successfuly"),
-        (FAILED, "Failed to complete. Not reverted"),
-        (REVERTING, "Failed. Reverting in progress"),
-        (REVERTED, "Reverted"),
-        (ERROR, "Failed to revert properly"),
-    ])
+    STATUSES = OrderedDict(
+        [
+            (NOT_STARTED, "Not started"),
+            (STARTED, "Started. In progress"),
+            (SUCCESS, "Completed successfuly"),
+            (FAILED, "Failed to complete. Not reverted"),
+            (REVERTING, "Failed. Reverting in progress"),
+            (REVERTED, "Reverted"),
+            (ERROR, "Failed to revert properly"),
+        ]
+    )
 
     CLEAN_STATUSES = [NOT_STARTED, SUCCESS, REVERTED, ERROR]
 
@@ -140,7 +142,7 @@ class Task(BaseTask):
 
     def release_from_output(self, key):
         if key in self.output:
-            del(self.output[key])
+            del self.output[key]
 
 
 class TaskFailed(Exception):
@@ -180,8 +182,7 @@ class TaskCollection(BaseTask):
                     if task.processing_exception:
                         exp = task.processing_exception
                         tb = task.processing_traceback
-                    logger.error(
-                        "Failed to process task #{}: {}".format(index, exp))
+                    logger.error("Failed to process task #{}: {}".format(index, exp))
                     self.processing_exception = exp
                     self.processing_traceback = tb
                     raise TaskFailed()
@@ -192,8 +193,7 @@ class TaskCollection(BaseTask):
         except TaskFailed:
             self.revert(index)
         else:
-            logger.info("Successfuly processed task collection {}"
-                        .format(self.name))
+            logger.info("Successfuly processed task collection {}".format(self.name))
             self.update_status(self.SUCCESS)
 
     def revert(self, index):
@@ -204,25 +204,23 @@ class TaskCollection(BaseTask):
             for rb_index in range(index, -1, -1):
                 logger.debug("Calling revert on task #{}".format(rb_index))
                 task = self.instances.pop()
-                if task.status not in (self.REVERTED, self.REVERTING,
-                                       self.ERROR):
+                if task.status not in (self.REVERTED, self.REVERTING, self.ERROR):
                     try:
                         task.revert()
                     except Exception as exp:
                         self.reverting_exception = exp
                         self.reverting_traceback = traceback.format_exc()
-                        logger.error("Failed to revert task #{}."
-                                     .format(rb_index))
+                        logger.error("Failed to revert task #{}.".format(rb_index))
                         raise TaskFailed()
                     else:
                         logger.debug("Reverted task #{}".format(rb_index))
         except TaskFailed:
-            logger.error("Error while reverting. Improper state at index {}"
-                         .format(rb_index))
+            logger.error(
+                "Error while reverting. Improper state at index {}".format(rb_index)
+            )
             self.update_status(self.ERROR)
         else:
-            logger.info("Successfuly reverted task collection {}"
-                        .format(self.name))
+            logger.info("Successfuly reverted task collection {}".format(self.name))
             self.update_status(self.REVERTED)
 
     def revert_all(self):

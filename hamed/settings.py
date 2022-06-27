@@ -20,65 +20,65 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '))u$9(dxv#=u&o72*gzgk6$e$y(n^vb=p8gp(30uhlk2&f8qc+'
+SECRET_KEY = "))u$9(dxv#=u&o72*gzgk6$e$y(n^vb=p8gp(30uhlk2&f8qc+"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_forms_bootstrap',
-    'hamed',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django_forms_bootstrap",
+    "hamed",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'hamed.urls'
+ROOT_URLCONF = "hamed.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'hamed.wsgi.application'
+WSGI_APPLICATION = "hamed.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
 
@@ -93,64 +93,62 @@ AUTH_PASSWORD_VALIDATORS = []
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "null": {
+            "level": "DEBUG",
+            "class": "logging.NullHandler",
         },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "django.utils.log.AdminEmailHandler",
         },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'default',
-            'filename': os.path.join("/tmp", 'hamed-debug.log'),
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "formatter": "default",
+            "filename": os.path.join("/tmp", "hamed-debug.log"),
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['null', 'file'],
-            'propagate': True,
-            'level': 'INFO',
+    "loggers": {
+        "django": {
+            "handlers": ["null", "file"],
+            "propagate": True,
+            "level": "INFO",
         },
-        'django.request': {
-            'handlers': ['mail_admins', 'file'],
-            'level': 'ERROR',
-            'propagate': False,
+        "django.request": {
+            "handlers": ["mail_admins", "file"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'iso8601': {
-            'handlers': ['null'],
-            'level': 'DEBUG',
-            'propagate': False,
+        "iso8601": {
+            "handlers": ["null"],
+            "level": "DEBUG",
+            "propagate": False,
         },
-        '': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        }
+        "": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
-    'formatters': {
-        'brief': {
-            'format': '%(asctime)s %(message)s'
+    "formatters": {
+        "brief": {"format": "%(asctime)s %(message)s"},
+        "default": {
+            "format": "%(asctime)s %(levelname)-8s %(name)-15s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        'default': {
-            'format': '%(asctime)s %(levelname)-8s %(name)-15s %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S'
-        }
-    }
+    },
 }
 
-LANGUAGE_CODE = 'fr-fr'
+LANGUAGE_CODE = "fr-fr"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -163,7 +161,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATICFILES_DIRS = []
 
 COLLECT_DOCUMENTS_FOLDER = os.path.join(BASE_DIR, "Collectes-RAMED")

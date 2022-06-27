@@ -11,73 +11,128 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Collect',
+            name="Collect",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('started', 'Collecte terrain en cours'), ('ended', 'Collecte terminée, analyse des données'), ('finalized', 'Collecte finalisée avec documents')], default='started', max_length=50)),
-                ('started_on', models.DateTimeField(auto_now_add=True)),
-                ('ended_on', models.DateTimeField(blank=True, null=True)),
-                ('finalized_on', models.DateTimeField(blank=True, null=True)),
-                ('uploaded_on', models.DateTimeField(blank=True, null=True)),
-                ('cercle_id', models.CharField(default='33', max_length=100, verbose_name='Cercle')),
-                ('commune_id', models.CharField(max_length=100, verbose_name='Commune')),
-                ('suffix', models.CharField(max_length=50, verbose_name='Suffixe')),
-                ('mayor_title', models.CharField(choices=[('sir', 'M.'), ('madam', 'Mme'), ('doctor', 'Dr')], max_length=50, verbose_name='Titre')),
-                ('mayor_name', models.CharField(max_length=100, verbose_name='Nom du maire')),
-                ('ona_form_pk', models.IntegerField(blank=True, null=True)),
-                ('ona_scan_form_pk', models.IntegerField(blank=True, null=True)),
-                ('nb_submissions', models.IntegerField(blank=True, null=True)),
-                ('nb_indigents', models.IntegerField(blank=True, null=True)),
-                ('nb_non_indigents', models.IntegerField(blank=True, null=True)),
-                ('nb_medias_form', models.IntegerField(blank=True, null=True)),
-                ('nb_medias_scan_form', models.IntegerField(blank=True, null=True)),
-                ('medias_size_form', models.IntegerField(blank=True, null=True)),
-                ('medias_size_scan_form', models.IntegerField(blank=True, null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("started", "Collecte terrain en cours"),
+                            ("ended", "Collecte terminée, analyse des données"),
+                            ("finalized", "Collecte finalisée avec documents"),
+                        ],
+                        default="started",
+                        max_length=50,
+                    ),
+                ),
+                ("started_on", models.DateTimeField(auto_now_add=True)),
+                ("ended_on", models.DateTimeField(blank=True, null=True)),
+                ("finalized_on", models.DateTimeField(blank=True, null=True)),
+                ("uploaded_on", models.DateTimeField(blank=True, null=True)),
+                (
+                    "cercle_id",
+                    models.CharField(
+                        default="33", max_length=100, verbose_name="Cercle"
+                    ),
+                ),
+                (
+                    "commune_id",
+                    models.CharField(max_length=100, verbose_name="Commune"),
+                ),
+                ("suffix", models.CharField(max_length=50, verbose_name="Suffixe")),
+                (
+                    "mayor_title",
+                    models.CharField(
+                        choices=[("sir", "M."), ("madam", "Mme"), ("doctor", "Dr")],
+                        max_length=50,
+                        verbose_name="Titre",
+                    ),
+                ),
+                (
+                    "mayor_name",
+                    models.CharField(max_length=100, verbose_name="Nom du maire"),
+                ),
+                ("ona_form_pk", models.IntegerField(blank=True, null=True)),
+                ("ona_scan_form_pk", models.IntegerField(blank=True, null=True)),
+                ("nb_submissions", models.IntegerField(blank=True, null=True)),
+                ("nb_indigents", models.IntegerField(blank=True, null=True)),
+                ("nb_non_indigents", models.IntegerField(blank=True, null=True)),
+                ("nb_medias_form", models.IntegerField(blank=True, null=True)),
+                ("nb_medias_scan_form", models.IntegerField(blank=True, null=True)),
+                ("medias_size_form", models.IntegerField(blank=True, null=True)),
+                ("medias_size_scan_form", models.IntegerField(blank=True, null=True)),
             ],
             options={
-                'ordering': ['-started_on'],
+                "ordering": ["-started_on"],
             },
         ),
         migrations.CreateModel(
-            name='Settings',
+            name="Settings",
             fields=[
-                ('key', models.SlugField(primary_key=True, serialize=False)),
-                ('value', models.CharField(max_length=500)),
+                ("key", models.SlugField(primary_key=True, serialize=False)),
+                ("value", models.CharField(max_length=500)),
             ],
             options={
-                'verbose_name': 'Setting',
-                'verbose_name_plural': 'Settings',
-                'ordering': ['key'],
+                "verbose_name": "Setting",
+                "verbose_name_plural": "Settings",
+                "ordering": ["key"],
             },
         ),
         migrations.CreateModel(
-            name='Target',
+            name="Target",
             fields=[
-                ('identifier', models.CharField(max_length=10, primary_key=True, serialize=False)),
-                ('first_name', models.CharField(max_length=250)),
-                ('last_name', models.CharField(max_length=250)),
-                ('age', models.IntegerField()),
-                ('gender', models.CharField(choices=[('male', 'Masculin'), ('female', 'Feminin')], max_length=20)),
-                ('region', models.CharField(max_length=100)),
-                ('cercle', models.CharField(max_length=100)),
-                ('commune', models.CharField(max_length=100)),
-                ('village', models.CharField(max_length=100)),
-                ('is_indigent', models.NullBooleanField()),
-                ('form_dataset', jsonfield.fields.JSONField(blank=True, default=dict)),
-                ('scan_form_dataset', jsonfield.fields.JSONField(blank=True, default=dict)),
-                ('collect', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='targets', to='hamed.Collect')),
+                (
+                    "identifier",
+                    models.CharField(max_length=10, primary_key=True, serialize=False),
+                ),
+                ("first_name", models.CharField(max_length=250)),
+                ("last_name", models.CharField(max_length=250)),
+                ("age", models.IntegerField()),
+                (
+                    "gender",
+                    models.CharField(
+                        choices=[("male", "Masculin"), ("female", "Feminin")],
+                        max_length=20,
+                    ),
+                ),
+                ("region", models.CharField(max_length=100)),
+                ("cercle", models.CharField(max_length=100)),
+                ("commune", models.CharField(max_length=100)),
+                ("village", models.CharField(max_length=100)),
+                ("is_indigent", models.NullBooleanField()),
+                ("form_dataset", jsonfield.fields.JSONField(blank=True, default=dict)),
+                (
+                    "scan_form_dataset",
+                    jsonfield.fields.JSONField(blank=True, default=dict),
+                ),
+                (
+                    "collect",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="targets",
+                        to="hamed.Collect",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-collect__started_on', 'last_name', 'first_name'],
+                "ordering": ["-collect__started_on", "last_name", "first_name"],
             },
         ),
         migrations.AlterUniqueTogether(
-            name='collect',
-            unique_together=set([('commune_id', 'suffix')]),
+            name="collect",
+            unique_together=set([("commune_id", "suffix")]),
         ),
     ]

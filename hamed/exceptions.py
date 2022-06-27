@@ -8,11 +8,15 @@ logger = logging.getLogger(__name__)
 
 
 class ONAAPIError(Exception):
-
-    def __init__(self,
-                 http_code, error_code=None,
-                 message=None, description=None,
-                 *args, **kwargs):
+    def __init__(
+        self,
+        http_code,
+        error_code=None,
+        message=None,
+        description=None,
+        *args,
+        **kwargs
+    ):
         super(ONAAPIError, self).__init__(*args, **kwargs)
         self.http_code = http_code
         self.error_code = error_code
@@ -33,13 +37,13 @@ class ONAAPIError(Exception):
             response = {}
 
         # ONA error with message
-        if 'detail' in response.keys():
-            return cls(http_code=request.status_code,
-                       message=response.get('detail'))
+        if "detail" in response.keys():
+            return cls(http_code=request.status_code, message=response.get("detail"))
 
         # unexpected answer (probably empty)
-        if not len([k for k in ('code', 'error', 'requestError')
-                    if k in response.keys()]):
+        if not len(
+            [k for k in ("code", "error", "requestError") if k in response.keys()]
+        ):
             return cls.generic_http(request.status_code)
 
         data = {"description": request.text}
@@ -56,12 +60,12 @@ class ONAAPIError(Exception):
             http=self.http_code,
             code=code,
             msg=self.message,
-            desc=": {}".format(self.description) if self.description else "")
+            desc=": {}".format(self.description) if self.description else "",
+        )
         return text
 
     def __str__(self):
-        return "<{cls} {text}>".format(cls=self.__class__.__name__,
-                                       text=self.to_text())
+        return "<{cls} {text}>".format(cls=self.__class__.__name__, text=self.to_text())
 
 
 class MultipleUSBDisksPlugged(Exception):
@@ -70,4 +74,3 @@ class MultipleUSBDisksPlugged(Exception):
 
 class NoUSBDiskPlugged(Exception):
     pass
-

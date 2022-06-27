@@ -9,13 +9,17 @@ import hamed.models.collects
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hamed', '0001_initial'),
+        ("hamed", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collect',
-            name='cercle_id',
-            field=models.CharField(default=hamed.models.collects.default_cercle_id, max_length=100, verbose_name='Cercle'),
+            model_name="collect",
+            name="cercle_id",
+            field=models.CharField(
+                default=hamed.models.collects.default_cercle_id,
+                max_length=100,
+                verbose_name="Cercle",
+            ),
         ),
     ]
