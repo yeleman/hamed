@@ -74,7 +74,7 @@ def gen_residence_certificate_pdf(target):
     profession = get_other(instance, 'enquete/profession')
     cercle = target.collect.cercle
     commune = target.collect.commune
-    localisation_enquete = instance.get("localisation-enquete/lieu_village")
+    localisation_enquete = instance.get("localisation-enquete/lieu_village") or commune
 
     headers = [["MINISTERE DE L'ADMINISTRATION", "", "", "REPUBLIQUE DU MALI"],
                ["TERRITORIALE DE LA DECENTRALISATION",

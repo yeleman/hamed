@@ -95,7 +95,7 @@ def gen_indigence_certificate_pdf(target):
                    lieu_naissance=lieu_naissance,
                    titre_enquete="fille " if is_female else "fils ",
                    name_pere=name_pere, name_mere=name_mere,
-                   village_enquete=localisation_enquete,
+                   village_enquete=localisation_enquete or commune,
                    adresse=adresse.lower())))
     # story.append(draw_paragraph(
     #    "<b>NB : </b> {}".format("Ce certificat d'indigence est valable pour "

@@ -196,9 +196,9 @@ def start_collect(request):
     if tc.successful:
         messages.success(
             request,
-            "La collecte «{}» a bien été créée.".format(tc.output.get("collect")),
+            "La collecte «{}» a bien été créée.".format(tc.inputs.get("collect")),
         )
-        return redirect("collect", tc.output.get("collect").id)
+        return redirect("collect", tc.inputs.get("collect").id)
     elif not tc.clean_state:
         return fail(
             "Impossible de créer la collecte. "

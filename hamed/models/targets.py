@@ -127,7 +127,8 @@ class Target(models.Model):
             'cercle': submission.get('localisation-enquete/lieu_cercle'),
             'commune': submission.get('localisation-enquete/lieu_commune'),
             'village': submission.get('localisation-enquete/lieu_village')
-            or submission.get('localisation-enquete/lieu_village_autre'),
+            or submission.get('localisation-enquete/lieu_village_autre')
+            or submission.get("localisation-enquete/lieu_commune"),
             'form_dataset': submission,
         }
         return cls.objects.create(**payload)

@@ -113,6 +113,8 @@ def gen_targets_documents(targets):
 
         # social survey
         P(target.get_folder_path()).makedirs_p()  # ensure personnal folder OK
+        if not os.path.exists(target.get_folder_path()):
+            os.sync()
         survey = gen_social_survey_pdf(target)
         survey_fname = get_document_fname('survey', target)
         survey_fpath = os.path.join(
